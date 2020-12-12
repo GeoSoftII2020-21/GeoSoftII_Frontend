@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 import requests
+import Eval
 app = Flask(__name__)
 
 Datastore = []
 
-@app.route("/", methods=['GET'])
+@app.route("/api/v1/", methods=['GET'])
 def default():
     """
     Soll ein JSON mit der Kurzübersicht unserer API Returnen
@@ -290,15 +291,26 @@ def jobsPOST(version):
     #Todo: Funktion schreiben die auswertet was im JSON steht...
     if (version == "v1"):
         dataFromPost = request.get_json() #Todo: JSON Evaluieren
-
-        job = {
-        } # Todo: Ergänzen
-
-        Datastore.append(job)
-        data = {"location": "URL",
-                "OpenEO-Identifier": "Test"
-                }  # Todo: Anpassen
-        return jsonify(data)
+        if(Eval.evalTask(dataFromPost, Datastore)):
+            print(Datastore)
+            data = {"location": "URL",
+                    "OpenEO-Identifier": "Test"
+                    }  # Todo: Anpassen
+            return jsonify(data)
+        else:
+            data = {
+                "id": "",  # Todo: ID Generieren bzw. Recherchieren
+                "code": "400",
+                "message": "Unbekannter Job Typ.",
+                "links": [
+                    {
+                        "href": "https://example.openeo.org/docs/errors/SampleError",
+                        # Todo: Passenden Link Recherchieren & Einfügen
+                        "rel": "about"
+                    }
+                ]
+            }
+            return jsonify(data)
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
