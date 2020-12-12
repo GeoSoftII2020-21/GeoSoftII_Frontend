@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 app = Flask(__name__)
 
+Datastore = []
 
 @app.route("/", methods=['GET'])
 def default():
@@ -285,9 +286,15 @@ def jobsPOST(version):
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
-    dataFromPost = request.get_json()
+
     #Todo: Funktion schreiben die auswertet was im JSON steht...
     if (version == "v1"):
+        dataFromPost = request.get_json() #Todo: JSON Evaluieren
+
+        job = {
+        } # Todo: Ergänzen
+
+        Datastore.append(job)
         data = {"location": "URL",
                 "OpenEO-Identifier": "Test"
                 }  # Todo: Anpassen
