@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-
+import requests
 app = Flask(__name__)
 
 
@@ -433,8 +433,9 @@ def postData():
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     dataFromPost = request.get_json()
-    data = None
-    return jsonify(data)
+    r = requests.post("http://localhost:443/data", json=dataFromPost)
+    data = r.text
+    return data
 
 
 def main():
