@@ -4,6 +4,7 @@ import Eval
 app = Flask(__name__)
 
 Datastore = []
+Queue = []
 
 @app.route("/api/v1/", methods=['GET'])
 def default():
@@ -368,6 +369,11 @@ def deleteFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
+        for i in Queue:
+            if i["id"] == id:
+                i["status"] = "created"
+                Queue.remove(i)
+                Datastore.append(i)
         data = None
         return jsonify(data)
     else:
@@ -395,9 +401,26 @@ def startFromID(version, id):
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
-    dataFromPost = request.get_json()
     if (version == "v1"):
-        data = None
+        for i in Datastore:
+            if i["id"] == id:
+                i["status"] = "queued"
+                Datastore.remove(i)
+                Queue.append(i)
+                data = None
+                return jsonify(data)
+        data = {
+            "id": "",  # Todo: ID Generieren bzw. Recherchieren
+            "code": "404",
+            "message": "Ungültiger API Aufruf.",
+            "links": [
+                {
+                    "href": "https://example.openeo.org/docs/errors/SampleError",
+                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "rel": "about"
+                }
+            ]
+        }
         return jsonify(data)
     else:
         data = {
@@ -418,7 +441,7 @@ def startFromID(version, id):
 @app.route("/api/<string:version>/jobs/<int:id>/results", methods=["GET"])
 def getJobFromID(version, id):
     """
-    Nimmt den Body eine Patch request mit einer ID entgegen
+    Nimmt den Body einer GET request mit einer ID entgegen
     :parameter:
         id (int): Nimmt die ID aus der URL entgegen
     :returns:
