@@ -2,9 +2,6 @@
   "url": "http://localhost/api/v1",
   "openapi": "https://raw.githubusercontent.com/Open-EO/openeo-api/1.0.0/openapi.yaml",
   "variables": {
-    "test": "/",
-    "test2": "GET",
-    "test3": "FIRMS"
   },
   "endpoints": {
     "endpoint1": {
@@ -21,6 +18,10 @@
     },
     "endpoint4": {
       "url": "/processes",
+      "request_type": "GET"
+    },
+    "endpoint5": {
+      "url": "/jobs",
       "request_type": "GET"
     }
   }

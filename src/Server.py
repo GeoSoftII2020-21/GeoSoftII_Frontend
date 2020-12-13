@@ -299,9 +299,8 @@ def jobsPOST(version):
     if (version == "v1"):
         dataFromPost = request.get_json()  # Todo: JSON Evaluieren
         if (Eval.evalTask(dataFromPost, Datastore)):
-            print(Datastore)
-            data = {"location": "URL",
-                    "OpenEO-Identifier": "Test"
+            data = {"Location": "URL",
+                    "OpenEO-Identifier": Datastore[len(Datastore)-1]["id"]
                     }  # Todo: Anpassen
             return jsonify(data)
         else:
