@@ -1,10 +1,13 @@
-from flask import Flask, request, jsonify
 import requests
+from flask import Flask, request, jsonify
+
 import Eval
+
 app = Flask(__name__)
 
 Datastore = []
 Queue = []
+
 
 @app.route("/api/v1/", methods=['GET'])
 def default():
@@ -23,8 +26,8 @@ def default():
              "title": "Homepage of the service provider"}]}
     return jsonify(data)
 
-
 @app.route("/.well-known/openeo", methods=["GET"])
+@app.route("/api/v1/.well-known/openeo", methods=["GET"])
 def wellKnownEO():
     """
     Implementiert abfrage für Supported openEO Versions auf wunsch von Judith.
@@ -33,11 +36,14 @@ def wellKnownEO():
     :returns:
         jsonify(data): JSON mit der Unterstützen API Version und ein verweis auf diese.
     """
-    data = {"versions": [
-        {"url": "localhost/api/v1",
-         "production": "false",
-         "api_version": "1.0.0"}
-    ]}
+    data = {
+        "versions": [
+            {
+                "url": "http://localhost/api/v1",
+                "api_version": "1.0.0"
+            },
+        ]
+    }
     return jsonify(data)
 
 
@@ -289,10 +295,10 @@ def jobsPOST(version):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
 
-    #Todo: Funktion schreiben die auswertet was im JSON steht...
+    # Todo: Funktion schreiben die auswertet was im JSON steht...
     if (version == "v1"):
-        dataFromPost = request.get_json() #Todo: JSON Evaluieren
-        if(Eval.evalTask(dataFromPost, Datastore)):
+        dataFromPost = request.get_json()  # Todo: JSON Evaluieren
+        if (Eval.evalTask(dataFromPost, Datastore)):
             print(Datastore)
             data = {"location": "URL",
                     "OpenEO-Identifier": "Test"
@@ -328,7 +334,7 @@ def jobsPOST(version):
         return jsonify(data)
 
 
-@app.route("/api/<string:version>/jobs/<int:id>", methods=['PATCH'])
+@app.route("/api/<string:version>/jobs/<uuid:id>", methods=['PATCH'])
 def patchFromID(version, id):
     """
     Nimmt den Body einer Patch request mit einer ID entgegen
@@ -358,7 +364,7 @@ def patchFromID(version, id):
         return jsonify(data)
 
 
-@app.route("/api/<string:version>/jobs/<int:id>", methods=["DELETE"])
+@app.route("/api/<string:version>/jobs/<uuid:id>", methods=["DELETE"])
 def deleteFromID(version, id):
     """
     Nimmt eine Delete request für eine ID Entgegen
@@ -392,7 +398,7 @@ def deleteFromID(version, id):
         return jsonify(data)
 
 
-@app.route("/api/<string:version>/jobs/<int:id>/results", methods=['POST'])
+@app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=['POST'])
 def startFromID(version, id):
     """
     Startet einen Job aufgrundlage einer ID aus der URL. Nimmt ebenso den Body der Post request entgegen
@@ -438,7 +444,7 @@ def startFromID(version, id):
         return jsonify(data)
 
 
-@app.route("/api/<string:version>/jobs/<int:id>/results", methods=["GET"])
+@app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=["GET"])
 def getJobFromID(version, id):
     """
     Nimmt den Body einer GET request mit einer ID entgegen

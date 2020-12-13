@@ -9,7 +9,7 @@ jobDict = {
 
 def evalTask(task, datastore):
     if supportedJobs.__contains__(task["process"]["id"]):
-        task["id"] = uuid.uuid1().int
+        task["id"] = uuid.uuid1()
         task["status"] = "created"
         task["created"] = datetime.now()
         datastore.append(task)
