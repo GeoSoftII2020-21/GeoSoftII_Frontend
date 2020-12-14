@@ -1,6 +1,7 @@
 {
   "url": "http://localhost/api/v1",
   "openapi": "https://raw.githubusercontent.com/Open-EO/openeo-api/1.0.0/openapi.yaml",
+  "output": "validator_output.json",
   "variables": {
   },
   "endpoints": {
@@ -23,6 +24,11 @@
     "endpoint5": {
       "url": "/jobs",
       "request_type": "GET"
+    },
+    "endpoint6": {
+      "url": "/jobs",
+      "request_type": "POST",
+      "body": "send.json"
     }
   }
 }
