@@ -2,12 +2,18 @@ import requests
 from flask import Flask, request, jsonify, Response
 import uuid
 import Eval
+import threading
+import time
+
 
 
 app = Flask(__name__)
 
+worker = {}
 Datastore = {}
 Queue = []
+Running = []
+Thread = None
 
 
 @app.route("/api/v1/", methods=['GET'])
@@ -273,6 +279,10 @@ def jobsGET(version):
         }  # Todo: Anpassen
         for i in Datastore:
             data["jobs"].append(Datastore[i])
+        for i in Queue:
+            data["jobs"].append(i)
+        for i in Running:
+            data["jobs"].append(i)
 
 
         return jsonify(data)
@@ -428,12 +438,11 @@ def startFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
-        print(Datastore)
-        print(id)
         job = Datastore[uuid.UUID(str(id))]
         job["status"] = "queued"
         Queue.append(job)
         Datastore.pop(uuid.UUID(str(id)))
+
         return Response(status=204)
     else:
         data = {
@@ -492,13 +501,52 @@ def postData():
     data = r.text
     return data
 
+@app.route("/customRegister",methods=["POST"])
+def register():
+    dataFromPatch = request.get_json()
+    worker[dataFromPatch["id"]] = dataFromPatch
+    return jsonify(None)
 
-def main():
+@app.route("/getDataBack",methods=["POST"])
+def getDataBack():
+    print("DoStuff")
+
+
+
+def serverBoot():
     """
     Startet den Server. Aktuell im Debug Modus und Reagiert auf alle eingehenden Anfragen auf Port 80.
     """
-    app.run(debug=True, host="0.0.0.0", port=80)
+    app.run(debug=True, host="0.0.0.0", port=80)#Todo: Debug  Ausschalten, Beißt sich  mit Threading
+
+def queCheck():
+    Thread =threading.Thread(target=checkWork)
+    Thread.start()
+
+def checkWork():
+    global Queue
+    global worker
+    while True:
+        n = 0
+        time.sleep(5)
+        if len(Queue)>0:
+            for j in Queue:
+                for i in worker:
+                    if worker[i]["status"] == "idle":
+                        temp = dict(j)
+                        temp["id"] = str(j["id"])
+                        requests.post("http://localhost:" + str(worker[i]["port"]) + "/takeJob", json=temp)
+                        Queue.pop(n)
+                        worker[i]["status"] = "running"
+                        j["status"] = "running"
+                        Running.append(j)
+                        print(Datastore)
+                        print(Queue)
+                        print(Running)
+                        print(worker)
+                n = n + 1
 
 
 if __name__ == "__main__":
-    main()
+    queCheck()
+    serverBoot()
