@@ -1,44 +1,50 @@
 {
-  "title": "Monthly aggregation on Sentinel 1",
-  "description": "Create a monthly aggregated Sentinel 1 product from a custom Python script.",
-  "process_graph": {
-    "loadco1": {
-      "process_id": "load_collection",
-      "arguments": {
-        "id": "Sentinel-1",
-        "spatial_extent": {
-          "west": 16.1,
-          "east": 16.6,
-          "north": 48.6,
-          "south": 47.2
-        },
-        "temporal_extent": ["2017-01-01", "2017-02-01"]
-      }
-    },
-    "reduce1": {
-      "process_id": "reduce",
-      "arguments": {
-        "data": {"from_node": "loadco1"},
-        "dimension": "t",
-        "reducer": {
-          "callback": {
-            "runudf1": {
-              "process_id": "run_udf",
-              "arguments": {
-                "data": [
-                  {"from_parameter": "x"},
-                  {"from_parameter": "y"}
-                ],
-                "udf": "s1_aggregate.py",
-                "runtime": "Python"
-              },
-              "result": true
-            }
-          }
-        },
-        "binary": true
+  "title": "Example Title",
+  "description": "Example Description",
+  "process": {
+    "process_graph": {
+      "loadcollection1": {
+        "process_id": "load_collection",
+        "arguments": {
+          "id": "COPERNICUS/S2",
+          "spatial_extent": {
+            "west": 16.138916,
+            "south": 48.2,
+            "east": 16.524124,
+            "north": 48.320647,
+            "crs": "EPSG:4326"
+          },
+          "temporal_extent": [
+            "2017-01-01T00:00:00Z",
+            "2017-01-31T23:59:59Z"
+          ],
+          "bands": [
+            "B4",
+            "B8"
+          ]
+        }
       },
-      "result": true
+      "loadcollection2": {
+        "process_id": "load_collection",
+        "arguments": {
+          "id": "COPERNICUS/S2",
+          "spatial_extent": {
+            "west": 16.138916,
+            "south": 48.2,
+            "east": 16.524124,
+            "north": 48.320647,
+            "crs": "EPSG:4326"
+          },
+          "temporal_extent": [
+            "2017-01-01T00:00:00Z",
+            "2017-01-31T23:59:59Z"
+          ],
+          "bands": [
+            "B4",
+            "B8"
+          ]
+        }
+      }
     }
   }
 }
