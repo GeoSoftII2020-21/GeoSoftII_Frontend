@@ -442,7 +442,10 @@ def startFromID(version, id):
         job["status"] = "queued"
         Queue.append(job)
         Datastore.pop(uuid.UUID(str(id)))
-
+        #Sende Job An Server
+        temp = dict(job)
+        temp["id"] = str(job["id"])
+        requests.post("http://localhost:442/takeJob", json=temp)
         return Response(status=204)
     else:
         data = {
@@ -501,15 +504,19 @@ def postData():
     data = r.text
     return data
 
-@app.route("/customRegister",methods=["POST"])
-def register():
-    dataFromPatch = request.get_json()
-    worker[dataFromPatch["id"]] = dataFromPatch
-    return jsonify(None)
+@app.route("/jobRunning/<uuid:id>",methods=["GET"])
+def jobUpdate(id):
+    c = 0
+    for i in Queue:
+        if i["id"] == uuid.UUID(id):
+            i["status"] = "running"
+            Running.append(i)
+            Queue.pop(c)
+        c = c + 1
 
-@app.route("/getDataBack",methods=["POST"])
-def getDataBack():
-    print("DoStuff")
+
+    #Soll status updates in empfang nehmen und einpflegen, Todo: Implementieren
+
 
 
 
@@ -519,34 +526,8 @@ def serverBoot():
     """
     app.run(debug=True, host="0.0.0.0", port=80)#Todo: Debug  Ausschalten, Beißt sich  mit Threading
 
-def queCheck():
-    Thread =threading.Thread(target=checkWork)
-    Thread.start()
 
-def checkWork():
-    global Queue
-    global worker
-    while True:
-        n = 0
-        time.sleep(5)
-        if len(Queue)>0:
-            for j in Queue:
-                for i in worker:
-                    if worker[i]["status"] == "idle":
-                        temp = dict(j)
-                        temp["id"] = str(j["id"])
-                        requests.post("http://localhost:" + str(worker[i]["port"]) + "/takeJob", json=temp)
-                        Queue.pop(n)
-                        worker[i]["status"] = "running"
-                        j["status"] = "running"
-                        Running.append(j)
-                        print(Datastore)
-                        print(Queue)
-                        print(Running)
-                        print(worker)
-                n = n + 1
 
 
 if __name__ == "__main__":
-    queCheck()
     serverBoot()
