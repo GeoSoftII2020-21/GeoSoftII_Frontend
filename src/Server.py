@@ -49,7 +49,8 @@ def wellKnownEO():
         "versions": [
             {
                 "url": "http://localhost/api/v1",
-                "api_version": "1.0.0"
+                "api_version": "1.0.0",
+                "production": False
             },
         ]
     }
