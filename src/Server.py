@@ -1,5 +1,6 @@
 import requests
 from flask import Flask, request, jsonify, Response
+from flask_cors import CORS
 import uuid
 import Eval
 import threading
@@ -8,6 +9,7 @@ import time
 
 
 app = Flask(__name__)
+CORS(app)
 
 worker = {}
 Datastore = {}
