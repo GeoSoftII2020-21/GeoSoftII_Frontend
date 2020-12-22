@@ -1,12 +1,10 @@
+import uuid
+
 import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
-import uuid
+
 import Eval
-import threading
-import time
-
-
 
 app = Flask(__name__)
 CORS(app)
@@ -34,6 +32,7 @@ def default():
             {"href": "https://www.uni-muenster.de/de/", "rel": "about", "type": "text/html",
              "title": "Homepage of the service provider"}]}
     return jsonify(data)
+
 
 @app.route("/.well-known/openeo", methods=["GET"])
 @app.route("/api/v1/.well-known/openeo", methods=["GET"])
@@ -232,8 +231,90 @@ def processes(version):
                             "title": "List of common band names as specified by the STAC specification"
                         }
                     ]
+                },
+                {
+                    "id": "mean_sst",
+                    "summary": "Mean Sea Surface Temperature",
+                    "description": "Computes the arithmatic mean of sst data. The arithmetic mean is defined as the sum of all elements divided by the number of elements. The user defines a timeframe and optionally also a spatial subset, for which the mean is to be computed. For each day in the given timeframe the sea surface temperature values for a cell are summed up and divided by the number of days in the timeframe. This is done for all cells within the spatial subset or, if no bounding box was defined, for all cells in the dataset.",
+                    "categories": [
+                        "math",
+                        "reducer"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "data",
+                            "description": "A raster data cube containing sst data.",
+                            "schema": {
+                                "type": "object",
+                                "subtype": "raster-cube"
+                            }
+                        },
+                        {
+                            "name": "timeframe",
+                            "description": "An array with two values: [start date, end date]. Timeframe values are strings of the format 'year-month-day'. For example: '1981-01-01'.",
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "subtype": "date"
+                                }
+                            }
+                        },
+                        {
+                            "name": "bbox",
+                            "description": "An array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. For example: [0,-90,360,90]",
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "optional": True
+                        }
+                    ],
+                    "returns": {
+                        "description": "A raster data cube containing the computed mean sea surface temperature.",
+                        "schema": {
+                            "type": "object",
+                            "subtype": "raster-cube"
+                        }
+                    },
+                    "exceptions": {
+                        "InvalidBboxLengthError": {
+                            "message": "Parameter bbox is an array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. Please specify an array with exactly four values."
+                        },
+                        "InvalidLongitudeValueError": {
+                            "message": "Longitude is out of bounds."
+                        },
+                        "InvalidLatitudeValueError": {
+                            "message": "Latitude is out of bounds."
+                        },
+                        "InvalidTimeframeLengthError": {
+                            "message": "Parameter timeframe is an array with two values: [start date, end date]. Please specify an array with exactly two values."
+                        },
+                        "InvalidTimeframeValueError": {
+                            "message": "Timeframe values are strings of the format 'year-month-day'. For example '1981-01-01'. Please specify timeframe values that follow this format."
+                        },
+                        "ValueError": {
+                            "message": "The timeframe values are invalid. Please specify actual dates as start and end date. "
+                        }
+                    },
+                    "links": [
+                        {
+                            "rel": "about",
+                            "href": "https://en.wikipedia.org/wiki/Arithmetic_mean",
+                            "title": "Arithmetic mean explained by Wikipedia"
+                        },
+                        {
+                            "rel": "about",
+                            "href": "https://en.wikipedia.org/wiki/Sea_surface_temperature",
+                            "title": "Sea surface temperature explained by Wikipedia"
+                        }
+                    ]
                 }
+
             ],
+
             "links": [
                 {
                     "rel": "alternate",
@@ -286,7 +367,6 @@ def jobsGET(version):
             data["jobs"].append(i)
         for i in Running:
             data["jobs"].append(i)
-
 
         return jsonify(data)
     else:
@@ -445,7 +525,7 @@ def startFromID(version, id):
         job["status"] = "queued"
         Queue.append(job)
         Datastore.pop(uuid.UUID(str(id)))
-        #Sende Job An Server
+        # Sende Job An Server
         temp = dict(job)
         temp["id"] = str(job["id"])
         requests.post("http://localhost:442/takeJob", json=temp)
@@ -508,8 +588,7 @@ def postData():
     return data
 
 
-
-@app.route("/jobRunning/<uuid:id>",methods=["GET"])
+@app.route("/jobRunning/<uuid:id>", methods=["GET"])
 def jobUpdate(id):
     c = 0
     for i in Queue:
@@ -519,24 +598,20 @@ def jobUpdate(id):
             Queue.pop(c)
         c = c + 1
 
+    # Soll status updates in empfang nehmen und einpflegen, Todo: Implementieren
 
-    #Soll status updates in empfang nehmen und einpflegen, Todo: Implementieren
 
-@app.route("/takeData/<uuid:id>",methods=["POST"])
+@app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
     Datastore[id] = request.get_json()
     return Response(status=200)
-
-
 
 
 def serverBoot():
     """
     Startet den Server. Aktuell im Debug Modus und Reagiert auf alle eingehenden Anfragen auf Port 80.
     """
-    app.run(debug=True, host="0.0.0.0", port=80)#Todo: Debug  Ausschalten, Beißt sich  mit Threading
-
-
+    app.run(debug=True, host="0.0.0.0", port=80)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
 
 
 if __name__ == "__main__":
