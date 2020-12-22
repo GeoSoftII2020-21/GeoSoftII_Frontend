@@ -1,0 +1,34 @@
+{
+  "url": "http://localhost/api/v1",
+  "openapi": "https://raw.githubusercontent.com/Open-EO/openeo-api/1.0.0/openapi.yaml",
+  "output": "validator_output.json",
+  "variables": {
+  },
+  "endpoints": {
+    "endpoint1": {
+      "url": "/",
+      "request_type": "GET"
+    },
+    "endpoint2": {
+      "url": "/.well-known/openeo",
+      "request_type": "GET"
+    },
+    "endpoint3": {
+      "url": "/collections",
+      "request_type": "GET"
+    },
+    "endpoint4": {
+      "url": "/processes",
+      "request_type": "GET"
+    },
+    "endpoint5": {
+      "url": "/jobs",
+      "request_type": "GET"
+    },
+    "endpoint6": {
+      "url": "/jobs",
+      "request_type": "POST",
+      "body": "send.json"
+    }
+  }
+}
