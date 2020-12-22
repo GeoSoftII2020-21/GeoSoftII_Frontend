@@ -507,6 +507,8 @@ def postData():
     data = r.text
     return data
 
+
+
 @app.route("/jobRunning/<uuid:id>",methods=["GET"])
 def jobUpdate(id):
     c = 0
@@ -519,6 +521,11 @@ def jobUpdate(id):
 
 
     #Soll status updates in empfang nehmen und einpflegen, Todo: Implementieren
+
+@app.route("/takeData/<uuid:id>",methods=["POST"])
+def takeData(id):
+    Datastore[id] = request.get_json()
+    return Response(status=200)
 
 
 

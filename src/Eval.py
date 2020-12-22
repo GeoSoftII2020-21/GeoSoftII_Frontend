@@ -7,7 +7,7 @@ jobDict = {
 }
 
 
-def evalTaskAndQueue(task, datastore):
+def evalTaskAndQueue(task:dict, datastore:dict):
     for i in task["process"]["process_graph"]:
         if supportedJobs.__contains__(task["process"]["process_graph"][i]["process_id"]):
             task["id"] = uuid.uuid1()
@@ -17,7 +17,7 @@ def evalTaskAndQueue(task, datastore):
             return [True, task["id"]]
     return False
 
-def evalTask(task):
+def evalTask(task:dict):
     for i in task["process"]["process_graph"]:
         if supportedJobs.__contains__(task["process"]["process_graph"][i]["process_id"]):
             return True
