@@ -1,13 +1,15 @@
 import uuid
-
+import time
 import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
-
+import os
 import Eval
 
 app = Flask(__name__)
 CORS(app)
+
+docker = False
 
 worker = {}
 Datastore = {}
@@ -528,7 +530,7 @@ def startFromID(version, id):
         # Sende Job An Server
         temp = dict(job)
         temp["id"] = str(job["id"])
-        requests.post("http://localhost:442/takeJob", json=temp)
+        requests.post("http://processManager:80/takeJob", json=temp)
         return Response(status=204)
     else:
         data = {
@@ -583,7 +585,7 @@ def postData():
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     dataFromPost = request.get_json()
-    r = requests.post("http://localhost:443/data", json=dataFromPost)
+    r = requests.post("http://database:80/data", json=dataFromPost)
     data = r.text
     return data
 
@@ -607,11 +609,16 @@ def takeData(id):
     return Response(status=200)
 
 
+
 def serverBoot():
     """
     Startet den Server. Aktuell im Debug Modus und Reagiert auf alle eingehenden Anfragen auf Port 80.
     """
+    global docker
+    if os.environ.get("DOCKER") == "True":
+        docker = True
     app.run(debug=True, host="0.0.0.0", port=80)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
+
 
 
 if __name__ == "__main__":
