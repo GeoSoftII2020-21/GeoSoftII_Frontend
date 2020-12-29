@@ -530,7 +530,10 @@ def startFromID(version, id):
         # Sende Job An Server
         temp = dict(job)
         temp["id"] = str(job["id"])
-        requests.post("http://processManager:80/takeJob", json=temp)
+        if docker:
+            requests.post("http://processManager:80/takeJob", json=temp)
+        else:
+            requests.post("http://localhost:80/takeJob", json=temp)
         return Response(status=204)
     else:
         data = {
@@ -585,7 +588,10 @@ def postData():
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     dataFromPost = request.get_json()
-    r = requests.post("http://database:80/data", json=dataFromPost)
+    if docker:
+        r = requests.post("http://database:80/data", json=dataFromPost)
+    else:
+        r = requests.post("http://localhost:443/data", json=dataFromPost)
     data = r.text
     return data
 
@@ -605,6 +611,7 @@ def jobUpdate(id):
 
 @app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
+    #Todo: Aus Running Entfernen
     Datastore[id] = request.get_json()
     return Response(status=200)
 
