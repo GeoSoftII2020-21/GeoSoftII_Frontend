@@ -1,10 +1,6 @@
 import datetime
 import uuid
 supportedJobs = ["ndvi", "sst","load_collection"]
-jobDict = {
-    "ndvi" : 443,
-    "sst" : 444
-}
 
 
 def evalTaskAndQueue(task:dict, datastore:dict):
@@ -15,7 +11,7 @@ def evalTaskAndQueue(task:dict, datastore:dict):
             task["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
             datastore[task["id"]] = task
             return [True, task["id"]]
-    return False
+    return [False, None]
 
 def evalTask(task:dict):
     for i in task["process"]["process_graph"]:

@@ -1,9 +1,10 @@
+import os
 import uuid
-import time
+
 import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
-import os
+
 import Eval
 
 app = Flask(__name__)
@@ -11,11 +12,10 @@ CORS(app)
 
 docker = False
 
-worker = {}
+
 Datastore = {}
 Queue = []
-Running = []
-Thread = None
+
 
 
 @app.route("/api/v1/", methods=['GET'])
@@ -72,38 +72,58 @@ def collections(version):
         data = {
             "collections": [
                 {
-                    "stac_version": "0.9.0",  # Todo: Welche Stack Version verwenden wir?
-                    "id": "MOD09Q1",  # Todo: Gibt es vorgeschriebene ids oder müssen wir die selbst generieren?
-                    "title": "Placeholder Title",
-                    "description": "Placeholder",
-                    "license": "proprietary",  # Anpassen für die Lizenztypen
-                    "extent": {
-                        "spatial": {
-                            "bbox": [
-                                [
-                                    0,
-                                    0,
-                                    0,
-                                    0
-                                ]
-                            ]
-                        },
-                        "temporal": {
-                            "interval": [
-                                [
-                                    "2000-02-01T00:00:00Z",
-                                    None
-                                ]
-                            ]
-                        }
+                    "stac_version": "",
+                    "id": "SST-Geosoft2",
+                    "title": "global SST data based on the NOAA OI SST V2 High Resolution Dataset",
+                    "description": "SST data based on the NOAA OI SST V2 High Resolution Dataset Data from 1981 up to today on a 1/4 deg global grid Saved as NetCDF file and provided as xArray See more details: https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
+                    "keywords": ["SST", "Geosoft", "NOAA", "global"],
+                    "version": "1.0",
+                    "license": "",
+                    "providers": "NOAA",
+                    "spatial_extent": {
+                        "west": "0.125E",
+                        "south": "89.875S",
+                        "east": "359.875E",
+                        "north": "89.875N",
+                        "crs": ""
                     },
-                    "links": [
-                        {
-                            "rel": "license",
-                            "href": "https://example.openeo.org/api/collections/MOD09Q1/license"
-                        }
+                    "temporal_extent": [
+                        "1981-09-01T00:00:00Z",
+                        "2020-12-31T23:59:59Z"
+                    ],
+                    "bands": ["SST"],
+                    "links": "https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
+                    "cube": "dimensions:{x:1424,y:720,z:1,t:'40years',bands:1}"
+                },
+                {
+                    "stac_version": "",
+                    "id": "Sentinel2-Geosoft2",
+                    "title": "Sentinel 2 based NDVI-bands",
+                    "description": "Sentinel 2 based NDVI-bands Bands needed for the NDVI based on Sentinel 2 data With a 100x100m grid for the area of Münster for 2017-2020",
+                    "keywords": ["S2", "Geosoft", "Sentinel2", "Sentinel", "NDVI"],
+                    "version": "1.0",
+                    "license": "",
+                    "providers": "Copernicus",
+                    "spatial_extent": {
+                        "west": 7.5315289026,
+                        "south": 51.3631578425,
+                        "east": 9.1432907668,
+                        "north": 52.35038628320001,
+                        "crs": ["EPSG:32631", "EPSG:32632"]
+                    },
+                    "temporal_extent": [
+                        "2017-01-01T00:00:00Z",
+                        "2020-12-31T23:59:59Z"
+                    ],
+                    "bands": [
+                        "B4",
+                        "B8"
                     ]
+                    ,
+                    "links": "https://scihub.copernicus.eu/",
+                    "cube": "dimensions:{x:1830,y:1830,z:1,t:'3years',bands:2}"
                 }
+
             ],
             "links": [
                 {
@@ -367,8 +387,6 @@ def jobsGET(version):
             data["jobs"].append(Datastore[i])
         for i in Queue:
             data["jobs"].append(i)
-        for i in Running:
-            data["jobs"].append(i)
 
         return jsonify(data)
     else:
@@ -522,6 +540,7 @@ def startFromID(version, id):
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
+    #Todo: Datastore sollte immer alle elemente beinhalten
     if (version == "v1"):
         job = Datastore[uuid.UUID(str(id))]
         job["status"] = "queued"
@@ -533,7 +552,7 @@ def startFromID(version, id):
         if docker:
             requests.post("http://processManager:80/takeJob", json=temp)
         else:
-            requests.post("http://localhost:80/takeJob", json=temp)
+            requests.post("http://localhost:440/takeJob", json=temp)
         return Response(status=204)
     else:
         data = {
@@ -592,7 +611,7 @@ def postData():
         r = requests.post("http://database:80/data", json=dataFromPost)
     else:
         r = requests.post("http://localhost:443/data", json=dataFromPost)
-    data = r.text
+    data = r.json()
     return data
 
 
@@ -611,10 +630,9 @@ def jobUpdate(id):
 
 @app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
-    #Todo: Aus Running Entfernen
+    # Todo: Aus Running Entfernen
     Datastore[id] = request.get_json()
     return Response(status=200)
-
 
 
 def serverBoot():
@@ -625,7 +643,6 @@ def serverBoot():
     if os.environ.get("DOCKER") == "True":
         docker = True
     app.run(debug=True, host="0.0.0.0", port=80)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
-
 
 
 if __name__ == "__main__":
