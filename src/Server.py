@@ -606,6 +606,11 @@ def postData():
 
 @app.route("/jobRunning/<uuid:id>", methods=["GET"])
 def jobUpdate(id):
+    """
+    Aktualisiert den Job status sofern er nicht abgebrochen wurde
+    :param id: ID
+    :return: Json mit Job
+    """
     if Datastore[uuid.UUID(id)]["status"] == "queued":
         Datastore[uuid.UUID(id)]["status"] = "running"
         return Datastore[uuid.UUID(id)]
@@ -615,6 +620,10 @@ def jobUpdate(id):
 
 @app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
+    """
+    Nimmt das ergebnis eines jobs entgegen und fügt ihm den Datastore hinzu
+    :rtype: Response Object
+    """
     Datastore[uuid.UUID(id)] = request.get_json()
     return Response(status=200)
 
