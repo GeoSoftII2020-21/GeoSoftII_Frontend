@@ -14,7 +14,7 @@ docker = False
 
 
 Datastore = {}
-Queue = []
+
 
 
 
@@ -385,9 +385,6 @@ def jobsGET(version):
         }  # Todo: Anpassen
         for i in Datastore:
             data["jobs"].append(Datastore[i])
-        for i in Queue:
-            data["jobs"].append(i)
-
         return jsonify(data)
     else:
         data = {
@@ -456,7 +453,6 @@ def jobsPOST(version):
 def patchFromID(version, id):
     """
     Nimmt den Body einer Patch request mit einer ID entgegen
-    Todo: Queue Implementieren welche Jobs nacheinander Abarbeitet. Fehler antwort senden wenn job bereits Prozessiert wird
     :parameter:
         id (int): Nimmt die ID aus der URL entgegen
     :returns:
@@ -509,11 +505,7 @@ def deleteFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
-        for i in Queue:
-            if i["id"] == uuid.UUID(str(id)):
-                i["status"] = "created"
-                Queue.remove(i)
-                Datastore[uuid.UUID(str(id))] = i
+        Datastore[uuid.UUID(id)]["status"] = "created"
         return Response(status=204)
     else:
         data = {
@@ -542,11 +534,8 @@ def startFromID(version, id):
     """
     #Todo: Datastore sollte immer alle elemente beinhalten
     if (version == "v1"):
+        Datastore[uuid.UUID(str(id))]["status"] = "queued"
         job = Datastore[uuid.UUID(str(id))]
-        job["status"] = "queued"
-        Queue.append(job)
-        Datastore.pop(uuid.UUID(str(id)))
-        # Sende Job An Server
         temp = dict(job)
         temp["id"] = str(job["id"])
         if docker:
@@ -617,21 +606,16 @@ def postData():
 
 @app.route("/jobRunning/<uuid:id>", methods=["GET"])
 def jobUpdate(id):
-    c = 0
-    for i in Queue:
-        if i["id"] == uuid.UUID(id):
-            i["status"] = "running"
-            Running.append(i)
-            Queue.pop(c)
-        c = c + 1
-
-    # Soll status updates in empfang nehmen und einpflegen, Todo: Implementieren
+    if Datastore[uuid.UUID(id)]["status"] == "queued":
+        Datastore[uuid.UUID(id)]["status"] = "running"
+        return Datastore[uuid.UUID(id)]
+    elif Datastore[uuid.UUID(id)]["status"] == "created":
+        return Datastore[uuid.UUID(id)]
 
 
 @app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
-    # Todo: Aus Running Entfernen
-    Datastore[id] = request.get_json()
+    Datastore[uuid.UUID(id)] = request.get_json()
     return Response(status=200)
 
 
