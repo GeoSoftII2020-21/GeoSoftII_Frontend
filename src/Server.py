@@ -539,9 +539,23 @@ def getJobFromID(version, id):
     :returns:
         jsonify(data): Ergebnis des Jobs welcher mit der ID assoziiert ist.
     """
+    bbox = []
+    for i in Datastore[uuid.UUID(id)]:
+        for j in Datastore[uuid.UUID(id)]["process"]["process_graph"]:
+            if Datastore[uuid.UUID(id)]["process"]["process_graph"][j]["id"] == "load_collection":
+                bbox.append(Datastore[uuid.UUID(id)]["process"]["process_graph"][j]["arguments"]["spatial_extent"])
     if (version == "v1"):
-        data = None
-        return jsonify(data)
+        returnVal = {
+            "stac_version" :  "string",
+            "stac_extensions" : [],
+            "id" : id,
+            "type" : "Feature",
+            "bbox" : bbox,
+            "geometry" : None, #Rücksprache was das ist?
+            "assets" :  None, #Rücksprache was wir überhaupt für
+            "links" : []
+        }
+        return jsonify(returnVal)
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
@@ -595,7 +609,7 @@ def takeData(id):
     Nimmt das ergebnis eines jobs entgegen und fügt ihm den Datastore hinzu
     :rtype: Response Object
     """
-    Datastore[uuid.UUID(id)] = request.get_json()
+    Datastore[uuid.UUID(id)]["result"] = request.get_json()
     return Response(status=200)
 
 
