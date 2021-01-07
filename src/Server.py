@@ -1,9 +1,10 @@
 import os
 import uuid
-
+import datetime
 import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
+import json
 
 import Eval
 
@@ -69,70 +70,8 @@ def collections(version):
     """
     # Todo: Abfrage an Daten Managment System über welche Collections wir überhaupt verfügen
     if (version == "v1"):
-        data = {
-            "collections": [
-                {
-                    "stac_version": "",
-                    "id": "SST-Geosoft2",
-                    "title": "global SST data based on the NOAA OI SST V2 High Resolution Dataset",
-                    "description": "SST data based on the NOAA OI SST V2 High Resolution Dataset Data from 1981 up to today on a 1/4 deg global grid Saved as NetCDF file and provided as xArray See more details: https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
-                    "keywords": ["SST", "Geosoft", "NOAA", "global"],
-                    "version": "1.0",
-                    "license": "",
-                    "providers": "NOAA",
-                    "spatial_extent": {
-                        "west": "0.125E",
-                        "south": "89.875S",
-                        "east": "359.875E",
-                        "north": "89.875N",
-                        "crs": ""
-                    },
-                    "temporal_extent": [
-                        "1981-09-01T00:00:00Z",
-                        "2020-12-31T23:59:59Z"
-                    ],
-                    "bands": ["SST"],
-                    "links": "https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
-                    "cube": "dimensions:{x:1424,y:720,z:1,t:'40years',bands:1}"
-                },
-                {
-                    "stac_version": "",
-                    "id": "Sentinel2-Geosoft2",
-                    "title": "Sentinel 2 based NDVI-bands",
-                    "description": "Sentinel 2 based NDVI-bands Bands needed for the NDVI based on Sentinel 2 data With a 100x100m grid for the area of Münster for 2017-2020",
-                    "keywords": ["S2", "Geosoft", "Sentinel2", "Sentinel", "NDVI"],
-                    "version": "1.0",
-                    "license": "",
-                    "providers": "Copernicus",
-                    "spatial_extent": {
-                        "west": 7.5315289026,
-                        "south": 51.3631578425,
-                        "east": 9.1432907668,
-                        "north": 52.35038628320001,
-                        "crs": ["EPSG:32631", "EPSG:32632"]
-                    },
-                    "temporal_extent": [
-                        "2017-01-01T00:00:00Z",
-                        "2020-12-31T23:59:59Z"
-                    ],
-                    "bands": [
-                        "B4",
-                        "B8"
-                    ]
-                    ,
-                    "links": "https://scihub.copernicus.eu/",
-                    "cube": "dimensions:{x:1830,y:1830,z:1,t:'3years',bands:2}"
-                }
-
-            ],
-            "links": [
-                {
-                    "rel": "alternate",
-                    "href": "https://example.openeo.org/csw",
-                    "title": "openEO catalog (OGC Catalogue Services 3.0)"
-                }
-            ]
-        }  # Todo: Anpassen
+        with open("json/collection_description.json") as json_file:
+            data = json.load(json_file)
         return jsonify(data)
     else:
         data = {
@@ -160,163 +99,9 @@ def processes(version):
         jsonify(data): Alle processes in einer JSON
     """
     if (version == "v1"):
-        data = {
-            "processes": [
-                {
-                    "processes": [
-                        {
-                            "id": "ndvi",
-                            "summary": "Normalized Difference Vegetation Index",
-                            "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. As a result of the computation, a NetCDF-File including the NDVI-values is created in the given path.",
-                            "categories": [
-                                "math > indices",
-                                "vegetation indices"
-                            ],
-                            "parameters": [
-                                {
-                                    "name": "data",
-                                    "description": "Name of data input / data cube.",
-                                    "schema": {
-                                        "type": "object",
-                                        "subtype": "raster-cube"
-                                    }
-                                },
-                                {
-                                    "name": "nir",
-                                    "description": "Represents all nir-bands that are relevant for NDVI calculation within a given time horizon.",
-                                    "schema": {
-                                        "type": "xarray",
-                                        "subtype": "xarray.core.dataarray.DataArray"
-                                    },
-                                },
-                                {
-                                    "name": "red",
-                                    "description": "Represents all red-bands that are relevant for NDVI calculation within a given time horizon.",
-                                    "schema": {
-                                        "type": "xarray",
-                                        "subtype": "xarray.core.dataarray.DataArray"
-                                    },
-                                }
-                            ],
-                            "returns": {
-                                "description": "A dask.delayed.Delayed object containing the computed NDVI values. Additionally, this is saved as NetCDF under the given path.",
-                                "schema": {
-                                    "type": "object",
-                                    "subtype": "raster-cube"
-                                }
-                            },
-                            "exceptions": {
-                                "ValueError": {
-                                    "message": "Red or Nir is empty."
-                                }
-                            },
-                            "links": [
-                                {
-                                    "rel": "about",
-                                    "href": "https://en.wikipedia.org/wiki/Normalized_difference_vegetation_index",
-                                    "title": "NDVI explained by Wikipedia"
-                                },
-                                {
-                                    "rel": "about",
-                                    "href": "https://earthobservatory.nasa.gov/features/MeasuringVegetation/measuring_vegetation_2.php",
-                                    "title": "NDVI explained by NASA"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "id": "mean_sst",
-                    "summary": "Mean Sea Surface Temperature",
-                    "description": "Computes the arithmatic mean of sst data. The arithmetic mean is defined as the sum of all elements divided by the number of elements. The user defines a timeframe and optionally also a spatial subset, for which the mean is to be computed. For each day in the given timeframe the sea surface temperature values for a cell are summed up and divided by the number of days in the timeframe. This is done for all cells within the spatial subset or, if no bounding box was defined, for all cells in the dataset.",
-                    "categories": [
-                        "math",
-                        "reducer"
-                    ],
-                    "parameters": [
-                        {
-                            "name": "data",
-                            "description": "A raster data cube containing sst data.",
-                            "schema": {
-                                "type": "object",
-                                "subtype": "raster-cube"
-                            }
-                        },
-                        {
-                            "name": "timeframe",
-                            "description": "An array with two values: [start date, end date]. Timeframe values are strings of the format 'year-month-day'. For example: '1981-01-01'.",
-                            "schema": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string",
-                                    "subtype": "date"
-                                }
-                            }
-                        },
-                        {
-                            "name": "bbox",
-                            "description": "An array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. For example: [0,-90,360,90]",
-                            "schema": {
-                                "type": "array",
-                                "items": {
-                                    "type": "number"
-                                }
-                            },
-                            "optional": True
-                        }
-                    ],
-                    "returns": {
-                        "description": "A raster data cube containing the computed mean sea surface temperature.",
-                        "schema": {
-                            "type": "object",
-                            "subtype": "raster-cube"
-                        }
-                    },
-                    "exceptions": {
-                        "InvalidBboxLengthError": {
-                            "message": "Parameter bbox is an array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. Please specify an array with exactly four values."
-                        },
-                        "InvalidLongitudeValueError": {
-                            "message": "Longitude is out of bounds."
-                        },
-                        "InvalidLatitudeValueError": {
-                            "message": "Latitude is out of bounds."
-                        },
-                        "InvalidTimeframeLengthError": {
-                            "message": "Parameter timeframe is an array with two values: [start date, end date]. Please specify an array with exactly two values."
-                        },
-                        "InvalidTimeframeValueError": {
-                            "message": "Timeframe values are strings of the format 'year-month-day'. For example '1981-01-01'. Please specify timeframe values that follow this format."
-                        },
-                        "ValueError": {
-                            "message": "The timeframe values are invalid. Please specify actual dates as start and end date. "
-                        }
-                    },
-                    "links": [
-                        {
-                            "rel": "about",
-                            "href": "https://en.wikipedia.org/wiki/Arithmetic_mean",
-                            "title": "Arithmetic mean explained by Wikipedia"
-                        },
-                        {
-                            "rel": "about",
-                            "href": "https://en.wikipedia.org/wiki/Sea_surface_temperature",
-                            "title": "Sea surface temperature explained by Wikipedia"
-                        }
-                    ]
-                }
-
-            ],
-
-            "links": [
-                {
-                    "rel": "alternate",
-                    "href": "https://provider.com/processes",
-                    "type": "text/html",
-                    "title": "HTML version of the processes"
-                }
-            ]
-        }  # Todo: Anpassen, Dev Team beauftragen das gleiche für SST zu schreiben, von Dev Team Verifizieren Lassen
+        with open("json/process_description.json") as json_file:
+            data = json.load(json_file)
+        # Todo: Anpassen, Dev Team beauftragen das gleiche für SST zu schreiben, von Dev Team Verifizieren Lassen
         return jsonify(data)
     else:
         data = {
@@ -432,6 +217,8 @@ def patchFromID(version, id):
     dataFromPatch = request.get_json()
     if (version == "v1"):
         if Eval.evalTask(dataFromPatch):
+            dataFromPatch["created"] = Datastore[uuid.UUID(id)]["created"]
+            dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
             Datastore[uuid.UUID(id)] = dataFromPatch
         else:
             data = {
@@ -546,14 +333,34 @@ def getJobFromID(version, id):
                 bbox.append(Datastore[uuid.UUID(id)]["process"]["process_graph"][j]["arguments"]["spatial_extent"])
     if (version == "v1"):
         returnVal = {
-            "stac_version" :  "string",
-            "stac_extensions" : [],
-            "id" : id,
-            "type" : "Feature",
-            "bbox" : bbox,
-            "geometry" : None, #Rücksprache was das ist?
-            "assets" :  None, #Rücksprache was wir überhaupt für
-            "links" : []
+            "stac_version":  "string",
+            "stac_extensions": [],
+            "id": id,
+            "type": "Feature",
+            "bbox": bbox,
+            "geometry": None, #Rücksprache was das ist?
+            "properties": {
+                "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
+                "start_datetime": Datastore[uuid.UUID(id)]["start_datetime"],
+                "end_datetime": Datastore[uuid.UUID(id)]["end_datetime"],
+                "title": Datastore[uuid.UUID(id)]["title"],
+                "description": Datastore[uuid.UUID(id)]["description"],
+                "license":  "", #Todo: Lizenz Einfpgen
+                "providers": [{
+                    "name": "WWU Studienprojekt",
+                    "description": "Studienprojekt der WWU",
+                    "roles": [
+                        "host"
+                    ]
+                }
+                ],
+                "created": Datastore[uuid.UUID(id)]["created"],
+                "updated": Datastore[uuid.UUID(id)]["updated"],
+                "expires": None,
+            },
+            "assets":  { #Todo: Aus prozessbeschreibung generieren
+            }, #Todo: Ergänzen wenn wir netcdfs haben
+            "links": []
         }
         return jsonify(returnVal)
     else:
@@ -599,7 +406,7 @@ def jobUpdate(id):
     if Datastore[uuid.UUID(id)]["status"] == "queued":
         Datastore[uuid.UUID(id)]["status"] = "running"
         return Datastore[uuid.UUID(id)]
-    elif Datastore[uuid.UUID(id)]["status"] == "created":
+    elif Datastore[uuid.UUID(id)]["status"] != "queued":
         return Datastore[uuid.UUID(id)]
 
 

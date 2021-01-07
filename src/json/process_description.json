@@ -1,0 +1,177 @@
+{
+  "processes": [
+    {
+      "processes": [
+        {
+          "id": "ndvi",
+          "summary": "Normalized Difference Vegetation Index",
+          "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. As a result of the computation, a NetCDF-File including the NDVI-values is created in the given path.",
+          "categories": [
+            "math > indices",
+            "vegetation indices"
+          ],
+          "parameters": [
+            {
+              "name": "data",
+              "description": "Name of data input / data cube.",
+              "schema": {
+                "type": "object",
+                "subtype": "raster-cube"
+              }
+            }
+          ],
+          "returns": {
+            "description": "A dask.delayed.Delayed object containing the computed NDVI values. Additionally, this is saved as NetCDF under the given path.",
+            "schema": {
+              "type": "object",
+              "subtype": "raster-cube"
+            }
+          },
+          "exceptions": {
+            "ValueError": {
+              "message": "Red or Nir is empty."
+            }
+          },
+          "links": [
+            {
+              "rel": "about",
+              "href": "https://en.wikipedia.org/wiki/Normalized_difference_vegetation_index",
+              "title": "NDVI explained by Wikipedia"
+            },
+            {
+              "rel": "about",
+              "href": "https://earthobservatory.nasa.gov/features/MeasuringVegetation/measuring_vegetation_2.php",
+              "title": "NDVI explained by NASA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mean_sst",
+      "summary": "Mean Sea Surface Temperature",
+      "description": "Computes the arithmatic mean of sst data. The arithmetic mean is defined as the sum of all elements divided by the number of elements. The user defines a timeframe and optionally also a spatial subset, for which the mean is to be computed. For each day in the given timeframe the sea surface temperature values for a cell are summed up and divided by the number of days in the timeframe. This is done for all cells within the spatial subset or, if no bounding box was defined, for all cells in the dataset.",
+      "categories": [
+        "math",
+        "reducer"
+      ],
+      "parameters": [
+        {
+          "name": "data",
+          "description": "A raster data cube containing sst data.",
+          "schema": {
+            "type": "object",
+            "subtype": "raster-cube"
+          }
+        },
+        {
+          "name": "timeframe",
+          "description": "An array with two values: [start date, end date]. Timeframe values are strings of the format 'year-month-day'. For example: '1981-01-01'.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "subtype": "date"
+            }
+          }
+        },
+        {
+          "name": "bbox",
+          "description": "An array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. For example: [0,-90,360,90]",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "optional": true
+        }
+      ],
+      "returns": {
+        "description": "A raster data cube containing the computed mean sea surface temperature.",
+        "schema": {
+          "type": "object",
+          "subtype": "raster-cube"
+        }
+      },
+      "exceptions": {
+        "InvalidBboxLengthError": {
+          "message": "Parameter bbox is an array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. Please specify an array with exactly four values."
+        },
+        "InvalidLongitudeValueError": {
+          "message": "Longitude is out of bounds."
+        },
+        "InvalidLatitudeValueError": {
+          "message": "Latitude is out of bounds."
+        },
+        "InvalidTimeframeLengthError": {
+          "message": "Parameter timeframe is an array with two values: [start date, end date]. Please specify an array with exactly two values."
+        },
+        "InvalidTimeframeValueError": {
+          "message": "Timeframe values are strings of the format 'year-month-day'. For example '1981-01-01'. Please specify timeframe values that follow this format."
+        },
+        "ValueError": {
+          "message": "The timeframe values are invalid. Please specify actual dates as start and end date. "
+        }
+      },
+      "links": [
+        {
+          "rel": "about",
+          "href": "https://en.wikipedia.org/wiki/Arithmetic_mean",
+          "title": "Arithmetic mean explained by Wikipedia"
+        },
+        {
+          "rel": "about",
+          "href": "https://en.wikipedia.org/wiki/Sea_surface_temperature",
+          "title": "Sea surface temperature explained by Wikipedia"
+        }
+      ]
+    },
+    {
+      "id": "save_result",
+      "summary": "Saves the Result in the specified  format with the specified name.",
+      "description": "Saves the Result in the specified  format with the specified name.",
+      "categories": [
+        "saving"
+      ],
+      "parameters": [
+        {
+          "name": "FileName",
+          "description": "The Name of the File",
+          "shema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Format",
+          "description": "The File Format. Available formats are netcdf",
+          "shema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "description": "No Return Value. Just starts saving of the File",
+        "shema": {
+          "type": null
+        }
+      },
+      "exceptions": {
+        "InvalidFileFormat": {
+          "message": "Invalid File Format. Compatible Formats are: netcdf"
+        },
+        "InvalidFileName": {
+          "message": "Invalid File Name. Please choose an other name"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "rel": "alternate",
+      "href": "https://provider.com/processes",
+      "type": "text/html",
+      "title": "HTML version of the processes"
+    }
+  ]
+}
