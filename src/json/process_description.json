@@ -1,49 +1,45 @@
 {
   "processes": [
     {
-      "processes": [
+      "id": "ndvi",
+      "summary": "Normalized Difference Vegetation Index",
+      "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. As a result of the computation, a NetCDF-File including the NDVI-values is created in the given path.",
+      "categories": [
+        "math > indices",
+        "vegetation indices"
+      ],
+      "parameters": [
         {
-          "id": "ndvi",
-          "summary": "Normalized Difference Vegetation Index",
-          "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. As a result of the computation, a NetCDF-File including the NDVI-values is created in the given path.",
-          "categories": [
-            "math > indices",
-            "vegetation indices"
-          ],
-          "parameters": [
-            {
-              "name": "data",
-              "description": "Name of data input / data cube.",
-              "schema": {
-                "type": "object",
-                "subtype": "raster-cube"
-              }
-            }
-          ],
-          "returns": {
-            "description": "A dask.delayed.Delayed object containing the computed NDVI values. Additionally, this is saved as NetCDF under the given path.",
-            "schema": {
-              "type": "object",
-              "subtype": "raster-cube"
-            }
-          },
-          "exceptions": {
-            "ValueError": {
-              "message": "Red or Nir is empty."
-            }
-          },
-          "links": [
-            {
-              "rel": "about",
-              "href": "https://en.wikipedia.org/wiki/Normalized_difference_vegetation_index",
-              "title": "NDVI explained by Wikipedia"
-            },
-            {
-              "rel": "about",
-              "href": "https://earthobservatory.nasa.gov/features/MeasuringVegetation/measuring_vegetation_2.php",
-              "title": "NDVI explained by NASA"
-            }
-          ]
+          "name": "data",
+          "description": "Name of data input / data cube.",
+          "schema": {
+            "type": "object",
+            "subtype": "raster-cube"
+          }
+        }
+      ],
+      "returns": {
+        "description": "A dask.delayed.Delayed object containing the computed NDVI values. Additionally, this is saved as NetCDF under the given path.",
+        "schema": {
+          "type": "object",
+          "subtype": "raster-cube"
+        }
+      },
+      "exceptions": {
+        "ValueError": {
+          "message": "Red or Nir is empty."
+        }
+      },
+      "links": [
+        {
+          "rel": "about",
+          "href": "https://en.wikipedia.org/wiki/Normalized_difference_vegetation_index",
+          "title": "NDVI explained by Wikipedia"
+        },
+        {
+          "rel": "about",
+          "href": "https://earthobservatory.nasa.gov/features/MeasuringVegetation/measuring_vegetation_2.php",
+          "title": "NDVI explained by NASA"
         }
       ]
     },
@@ -138,7 +134,7 @@
         {
           "name": "SaveData",
           "description": "Specify a datacube which will be Saved",
-          "shema": {
+          "schema": {
             "type": "object",
             "subtype": "raster-cube"
           }
@@ -146,14 +142,14 @@
         {
           "name": "Format",
           "description": "The File Format. Available formats are netcdf",
-          "shema": {
+          "schema": {
             "type": "string"
           }
         }
       ],
       "returns": {
         "description": "No Return Value. Just starts saving of the File",
-        "shema": {
+        "schema": {
           "type": null
         }
       },
@@ -188,7 +184,7 @@
         {
           "name": "cloudcoverage",
           "description": "Array with cloudcoverage in percent. It contains two  values  [min  percent, max  percent]",
-          "shema": {
+          "schema": {
             "type": "array",
             "items": {
               "type": "int"
@@ -198,14 +194,14 @@
         {
           "name": "DataType",
           "description": "Specify which Datatype. Avaiable are 'SST' data and 'Sentinel2' Data",
-          "shema": {
+          "schema": {
             "type": "string"
           }
         }
       ],
       "returns": {
         "description": "Returns a Datacube",
-        "shema": {
+        "schema": {
           "type": "object",
           "subtype": "raster-cube"
         }

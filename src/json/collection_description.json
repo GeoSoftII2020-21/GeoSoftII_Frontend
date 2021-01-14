@@ -1,7 +1,7 @@
 {
   "collections": [
     {
-      "stac_version": "",
+      "stac_version": "1.0.0",
       "id": "SST-Geosoft2",
       "title": "global SST data based on the NOAA OI SST V2 High Resolution Dataset",
       "description": "SST data based on the NOAA OI SST V2 High Resolution Dataset Data from 1981 up to today on a 1/4 deg global grid Saved as NetCDF file and provided as xArray See more details: https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
@@ -13,26 +13,42 @@
       ],
       "version": "1.0",
       "license": "",
-      "providers": "NOAA",
-      "spatial_extent": {
-        "west": "0.125E",
-        "south": "89.875S",
-        "east": "359.875E",
-        "north": "89.875N",
-        "crs": ""
+      "providers": [
+        {
+          "name": "NOAA",
+          "url": "https://www.noaa.gov/"
+        }
+      ],
+      "extent": {
+        "spatial": {
+          "bbox": [
+            [
+              0.125,
+              89.875,
+              359.875,
+              89.875
+            ]
+          ]
+        },
+        "temporal": {
+          "interval": [
+            [
+              "1981-09-01T00:00:00Z",
+              "2020-12-31T23:59:59Z"
+            ]
+          ]
+        }
       },
-      "temporal_extent": [
-        "1981-09-01T00:00:00Z",
-        "2020-12-31T23:59:59Z"
+      "links": [
+        {
+          "rel": "null",
+          "href": "https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail"
+        }
       ],
-      "bands": [
-        "SST"
-      ],
-      "links": "https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html#detail",
       "cube": "dimensions:{x:1424,y:720,z:1,t:'40years',bands:1}"
     },
     {
-      "stac_version": "",
+      "stac_version": "1.0.0",
       "id": "Sentinel2-Geosoft2",
       "title": "Sentinel 2 based NDVI-bands",
       "description": "Sentinel 2 based NDVI-bands Bands needed for the NDVI based on Sentinel 2 data With a 100x100m grid for the area of Münster for 2017-2020",
@@ -45,27 +61,38 @@
       ],
       "version": "1.0",
       "license": "",
-      "providers": "Copernicus",
-      "spatial_extent": {
-        "west": 7.5315289026,
-        "south": 51.3631578425,
-        "east": 9.1432907668,
-        "north": 52.35038628320001,
-        "crs": [
-          "EPSG:32631",
-          "EPSG:32632"
-        ]
+      "providers": [
+        {
+          "name": "Copernicus",
+          "url": "https://www.copernicus.eu/de"
+        }
+      ],
+      "extent": {
+        "spatial": {
+          "bbox": [
+            [
+              7.5315289026,
+              51.3631578425,
+              9.1432907668,
+              52.35038628320001
+            ]
+          ]
+        },
+        "temporal": {
+          "interval": [
+            [
+              "2017-01-01T00:00:00Z",
+              "2020-12-31T23:59:59Z"
+            ]
+          ]
+        }
       },
-      "temporal_extent": [
-        "2017-01-01T00:00:00Z",
-        "2020-12-31T23:59:59Z"
-      ],
-      "bands": [
-        "B4",
-        "B8"
-      ],
-      "links": "https://scihub.copernicus.eu/",
-      "cube": "dimensions:{x:1830,y:1830,z:1,t:'3years',bands:2}"
+      "links": [
+        {
+          "rel": "null",
+          "href": "https://scihub.copernicus.eu/"
+        }
+      ]
     }
   ],
   "links": [
