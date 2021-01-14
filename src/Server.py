@@ -5,7 +5,7 @@ import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import json
-
+import xarray
 import Eval
 
 app = Flask(__name__)
@@ -171,7 +171,7 @@ def jobsPOST(version):
         dataFromPost = request.get_json()  # Todo: JSON Evaluieren
         ev = Eval.evalTaskAndQueue(dataFromPost, Datastore)
         if (ev[0]):
-            resp = Response()
+            resp = Response(status=200)
             resp.headers["Location"] = "localhost/api/v1/jobs/" + str(ev[1])
             resp.headers["OpenEO-Identifier"] = str(ev[1])
             return resp
@@ -387,13 +387,17 @@ def postData():
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
-    dataFromPost = request.get_json()
-    if docker:
-        r = requests.post("http://database:80/data", json=dataFromPost)
-    else:
-        r = requests.post("http://localhost:443/data", json=dataFromPost)
-    data = r.json()
-    return data
+    dataFromPost = request.get_data()
+    f = open('data/sst.day.mean.1984.v2.nc', 'w+b')
+    binary_format = bytearray(dataFromPost)
+    f.write(binary_format)
+    f.close()
+    #if docker:
+    #    r = requests.post("http://database:80/data", json=None)
+    #else:
+    #    r = requests.post("http://localhost:443/data", json=None)
+    #data = r.json()
+    return jsonify(None)
 
 
 @app.route("/jobRunning/<uuid:id>", methods=["GET"])
@@ -403,11 +407,12 @@ def jobUpdate(id):
     :param id: ID
     :return: Json mit Job
     """
-    if Datastore[uuid.UUID(id)]["status"] == "queued":
-        Datastore[uuid.UUID(id)]["status"] = "running"
-        return Datastore[uuid.UUID(id)]
-    elif Datastore[uuid.UUID(id)]["status"] != "queued":
-        return Datastore[uuid.UUID(id)]
+    print(type(id))
+    if Datastore[id]["status"] == "queued":
+        Datastore[id]["status"] = "running"
+        return jsonify(Datastore[id])
+    elif Datastore[id]["status"] != "queued":
+        return Datastore[id]
 
 
 @app.route("/takeData/<uuid:id>", methods=["POST"])

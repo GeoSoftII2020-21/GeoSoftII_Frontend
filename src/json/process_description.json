@@ -136,10 +136,11 @@
       ],
       "parameters": [
         {
-          "name": "FileName",
-          "description": "The Name of the File",
+          "name": "SaveData",
+          "description": "Specify a datacube which will be Saved",
           "shema": {
-            "type": "string"
+            "type": "object",
+            "subtype": "raster-cube"
           }
         },
         {
@@ -162,6 +163,56 @@
         },
         "InvalidFileName": {
           "message": "Invalid File Name. Please choose an other name"
+        }
+      }
+    },
+    {
+      "id": "load_collection",
+      "summary": "Todo: Ausfüllen",
+      "description": "Todo: Ausfüllen",
+      "categories": [
+        "loading"
+      ],
+      "parameters": [
+        {
+          "name": "timeframe",
+          "description": "An array with two values: [start date, end date]. Timeframes have to use datetime64[ns] ",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "subtype": "date"
+            }
+          }
+        },
+        {
+          "name": "cloudcoverage",
+          "description": "Array with cloudcoverage in percent. It contains two  values  [min  percent, max  percent]",
+          "shema": {
+            "type": "array",
+            "items": {
+              "type": "int"
+            }
+          }
+        },
+        {
+          "name": "DataType",
+          "description": "Specify which Datatype. Avaiable are 'SST' data and 'Sentinel2' Data",
+          "shema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "description": "Returns a Datacube",
+        "shema": {
+          "type": "object",
+          "subtype": "raster-cube"
+        }
+      },
+      "exceptions": {
+        "ExampleException": {
+          "message": "TodoEinfügen"
         }
       }
     }
