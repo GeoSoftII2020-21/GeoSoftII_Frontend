@@ -2,7 +2,7 @@ import os
 import uuid
 import datetime
 import requests
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 import json
 import xarray
@@ -263,7 +263,7 @@ def deleteFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
-        Datastore[uuid.UUID(id)]["status"] = "created"
+        Datastore[uuid.UUID(id)]["status"] = "canceled"
         return Response(status=204)
     else:
         data = {
@@ -326,42 +326,28 @@ def getJobFromID(version, id):
     :returns:
         jsonify(data): Ergebnis des Jobs welcher mit der ID assoziiert ist.
     """
-    bbox = []
-    for i in Datastore[uuid.UUID(id)]:
-        for j in Datastore[uuid.UUID(id)]["process"]["process_graph"]:
-            if Datastore[uuid.UUID(id)]["process"]["process_graph"][j]["id"] == "load_collection":
-                bbox.append(Datastore[uuid.UUID(id)]["process"]["process_graph"][j]["arguments"]["spatial_extent"])
     if (version == "v1"):
         returnVal = {
-            "stac_version":  "string",
-            "stac_extensions": [],
+            "stac_version":  "1.0.0",
             "id": id,
             "type": "Feature",
-            "bbox": bbox,
             "geometry": None, #Rücksprache was das ist?
             "properties": {
                 "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
-                "start_datetime": Datastore[uuid.UUID(id)]["start_datetime"],
-                "end_datetime": Datastore[uuid.UUID(id)]["end_datetime"],
-                "title": Datastore[uuid.UUID(id)]["title"],
-                "description": Datastore[uuid.UUID(id)]["description"],
-                "license":  "", #Todo: Lizenz Einfpgen
-                "providers": [{
-                    "name": "WWU Studienprojekt",
-                    "description": "Studienprojekt der WWU",
-                    "roles": [
-                        "host"
-                    ]
-                }
-                ],
-                "created": Datastore[uuid.UUID(id)]["created"],
-                "updated": Datastore[uuid.UUID(id)]["updated"],
-                "expires": None,
+                "start_datetime": Datastore[uuid.UUID(str(id))]["start_datetime"],
+                "end_datetime": Datastore[uuid.UUID(str(id))]["end_datetime"],
+                "title": Datastore[uuid.UUID(str(id))]["title"],
+                "description": Datastore[uuid.UUID(str(id))]["description"],
+                "created": Datastore[uuid.UUID(str(id))]["created"],
             },
-            "assets":  { #Todo: Aus prozessbeschreibung generieren
-            }, #Todo: Ergänzen wenn wir netcdfs haben
+            "assets":  {
+            },
             "links": []
         }
+        if "updated" in Datastore[uuid.UUID(str(id))]:
+            returnVal["properties"]["updated"] = Datastore[uuid.UUID(str(id))]["updated"],
+        for filename in os.listdir("data/"+ str(id)+"/saves/"):
+            returnVal["assets"][filename] = {"href": "http://localhost:80/download/"+str(id)+"/"+str(filename)[:-3]}
         return jsonify(returnVal)
     else:
         data = {
@@ -377,6 +363,12 @@ def getJobFromID(version, id):
             ]
         }
         return jsonify(data)
+
+@app.route("/download/<uuid:id>/<uuid:subid>")
+def download(id, subid):
+    name = str(subid)+".nc"
+    return send_from_directory("data/"+str(id)+"/saves",filename=name, as_attachment=True,attachment_filename=name, mimetype="application/x-netcdf")
+
 
 
 @app.route("/data", methods=["POST"])
@@ -397,7 +389,7 @@ def postData():
     #else:
     #    r = requests.post("http://localhost:443/data", json=None)
     #data = r.json()
-    return jsonify(None)
+    return Response(status=200)
 
 
 @app.route("/jobRunning/<uuid:id>", methods=["GET"])
@@ -421,7 +413,8 @@ def takeData(id):
     Nimmt das ergebnis eines jobs entgegen und fügt ihm den Datastore hinzu
     :rtype: Response Object
     """
-    Datastore[uuid.UUID(id)]["result"] = request.get_json()
+    Datastore[id]["end_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
+    Datastore[id]["status"] = "finished"
     return Response(status=200)
 
 

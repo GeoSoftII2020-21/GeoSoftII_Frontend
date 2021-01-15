@@ -133,7 +133,7 @@
       "parameters": [
         {
           "name": "SaveData",
-          "description": "Specify a datacube which will be Saved",
+          "description": "Specify the name of Former process which result will be saved",
           "schema": {
             "type": "object",
             "subtype": "raster-cube"
