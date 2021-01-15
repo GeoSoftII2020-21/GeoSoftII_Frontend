@@ -9,7 +9,6 @@ def evalTaskAndQueue(task:dict, datastore:dict):
             task["id"] = uuid.uuid1()
             task["status"] = "created"
             task["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
-            task["updated"] = None
             task["start_datetime"] = None
             task["end_datetime"] = None
             datastore[task["id"]] = task

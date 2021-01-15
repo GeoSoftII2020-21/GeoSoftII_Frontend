@@ -148,9 +148,9 @@
         }
       ],
       "returns": {
-        "description": "No Return Value. Just starts saving of the File",
+        "description": "Returns a boolean which indicates if the save was successfull",
         "schema": {
-          "type": null
+          "type": "boolean"
         }
       },
       "exceptions": {
@@ -165,7 +165,7 @@
     {
       "id": "load_collection",
       "summary": "Load a specified Collection. Viable Collections are seen in the description",
-      "description": "Todo: Ausfüllen",
+      "description": "Loads a  a",
       "categories": [
         "loading"
       ],
@@ -187,7 +187,7 @@
           "schema": {
             "type": "array",
             "items": {
-              "type": "int"
+              "type": "number"
             }
           }
         },
