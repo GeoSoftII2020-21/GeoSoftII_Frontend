@@ -164,7 +164,7 @@
     },
     {
       "id": "load_collection",
-      "summary": "Todo: Ausfüllen",
+      "summary": "Load a specified Collection. Viable Collections are seen in the description",
       "description": "Todo: Ausfüllen",
       "categories": [
         "loading"
