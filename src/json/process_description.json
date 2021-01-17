@@ -11,7 +11,7 @@
       "parameters": [
         {
           "name": "data",
-          "description": "Name of data input / data cube.",
+          "description": "Sentinel-2 data as a xarray. (From an other Node)",
           "schema": {
             "type": "object",
             "subtype": "raster-cube"
@@ -19,7 +19,7 @@
         }
       ],
       "returns": {
-        "description": "A dask.delayed.Delayed object containing the computed NDVI values. Additionally, this is saved as NetCDF under the given path.",
+        "description": "A xarray.core.dataset.Dataset containing the computed NDVI values..",
         "schema": {
           "type": "object",
           "subtype": "raster-cube"
@@ -172,7 +172,7 @@
       "parameters": [
         {
           "name": "timeframe",
-          "description": "An array with two values: [start date, end date]. Timeframes have to use datetime64[ns] ",
+          "description": "An array with two values: [start date, end date, Format]. Each date String should be Formatted like the Format String, Example: '%Y-%m-%d %H:%M:%S.%f' ",
           "schema": {
             "type": "array",
             "items": {
@@ -183,7 +183,7 @@
         },
         {
           "name": "cloudcoverage",
-          "description": "Array with cloudcoverage in percent. It contains two  values  [min  percent, max  percent]",
+          "description": "Array with cloudcoverage in percent. It contains two  values  [min  percent, max  percent]. Only for Sentinel2 Data",
           "schema": {
             "type": "array",
             "items": {
