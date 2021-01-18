@@ -197,6 +197,16 @@
           "schema": {
             "type": "string"
           }
+        },
+        {
+          "name": "Login",
+          "description": "An Array cotaining Strings with Login Data for Sentinelhub",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       ],
       "returns": {
