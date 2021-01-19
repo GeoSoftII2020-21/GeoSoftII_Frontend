@@ -414,7 +414,7 @@ def takeData(id):
     :rtype: Response Object
     """
     Datastore[id]["end_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
-    Datastore[id]["status"] = "finished"
+    Datastore[id]["status"] = request.args["status"]
     return Response(status=200)
 
 
