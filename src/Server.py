@@ -2,11 +2,11 @@ import os
 import uuid
 import datetime
 import requests
-from flask import Flask, request, jsonify, Response, send_from_directory
+from flask import Flask, request, jsonify, Response, send_from_directory, make_response
 from flask_cors import CORS
 import json
 import xarray
-import Eval
+
 
 app = Flask(__name__)
 CORS(app)
@@ -76,17 +76,16 @@ def collections(version):
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Version.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/processes", methods=['GET'])
@@ -101,22 +100,20 @@ def processes(version):
     if (version == "v1"):
         with open("json/process_description.json") as json_file:
             data = json.load(json_file)
-        # Todo: Anpassen, Dev Team beauftragen das gleiche für SST zu schreiben, von Dev Team Verifizieren Lassen
         return jsonify(data)
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs", methods=['GET'])
@@ -145,17 +142,16 @@ def jobsGET(version):
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs", methods=['POST'])
@@ -165,44 +161,36 @@ def jobsPOST(version):
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
-
-    # Todo: Funktion schreiben die auswertet was im JSON steht...
     if (version == "v1"):
         dataFromPost = request.get_json()  # Todo: JSON Evaluieren
-        ev = Eval.evalTaskAndQueue(dataFromPost, Datastore)
-        if (ev[0]):
-            resp = Response(status=200)
-            resp.headers["Location"] = "localhost/api/v1/jobs/" + str(ev[1])
-            resp.headers["OpenEO-Identifier"] = str(ev[1])
-            return resp
-        else:
-            data = {
-                "id": "",  # Todo: ID Generieren bzw. Recherchieren
-                "code": "400",
-                "message": "Unbekannter Job Typ.",
-                "links": [
-                    {
-                        "href": "https://example.openeo.org/docs/errors/SampleError",
-                        # Todo: Passenden Link Recherchieren & Einfügen
-                        "rel": "about"
-                    }
-                ]
-            }
-            return jsonify(data)
+        id = uuid.uuid1()
+        Datastore[id] = dataFromPost
+        Datastore[id]["id"] = id
+        Datastore[id]["status"] = "created"
+        Datastore[id]["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
+                          :-4] + "Z"  # Formatiert zeit zu RFC339
+        Datastore[id]["start_datetime"] = None
+        Datastore[id]["end_datetime"] = None
+
+        resp = Response(status=200)
+        resp.headers["Location"] = "localhost/api/v1/jobs/" + str(id)
+        resp.headers["OpenEO-Identifier"] = str(id)
+        return resp
+
+
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs/<uuid:id>", methods=['PATCH'])
@@ -216,47 +204,28 @@ def patchFromID(version, id):
     """
     dataFromPatch = request.get_json()
     if (version == "v1"):
-        if Eval.evalTask(dataFromPatch):
-            dataFromPatch["created"] = Datastore[uuid.UUID(id)]["created"]
-            dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-            Datastore[uuid.UUID(id)] = dataFromPatch
-        else:
-            data = {
-                "id": "",  # Todo: ID Generieren bzw. Recherchieren
-                "code": "404",
-                "message": "Ungültiger API Aufruf.",
-                "links": [
-                    {
-                        "href": "https://example.openeo.org/docs/errors/SampleError",
-                        # Todo: Passenden Link Recherchieren & Einfügen
-                        "rel": "about"
-                    }
-                ]
-            }
-            return jsonify(data)
-
-
+        dataFromPatch["created"] = Datastore[uuid.UUID(id)]["created"]
+        dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+        Datastore[uuid.UUID(id)] = dataFromPatch
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs/<uuid:id>", methods=["DELETE"])
 def deleteFromID(version, id):
     """
     Nimmt eine Delete request für eine ID Entgegen
-    Todo: Herausfinden wie man das Umsetzt. Irgendwie müssen wir laufende Dask Prozesse Terminieren.
     :parameter:
         id (int): Nimmt die ID aus der URL entgegen
     :returns:
@@ -264,21 +233,21 @@ def deleteFromID(version, id):
     """
     if (version == "v1"):
         Datastore[uuid.UUID(id)]["status"] = "canceled"
+        #Todo: Wirklich alles Löschen und nicht Abbrechen
         return Response(status=204)
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=['POST'])
@@ -304,17 +273,16 @@ def startFromID(version, id):
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 
 @app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=["GET"])
@@ -352,17 +320,16 @@ def getJobFromID(version, id):
     else:
         data = {
             "id": "",  # Todo: ID Generieren bzw. Recherchieren
-            "code": "404",
-            "message": "Ungültiger API Aufruf.",
+            "message": "Invalid API Call.",
             "links": [
                 {
-                    "href": "https://example.openeo.org/docs/errors/SampleError",
-                    # Todo: Passenden Link Recherchieren & Einfügen
+                    "href": "http://localhost/api/v1/.well-known/openeo",
                     "rel": "about"
                 }
             ]
         }
-        return jsonify(data)
+        resp = make_response(jsonify(data), 404)
+        return resp
 
 @app.route("/download/<uuid:id>/<uuid:subid>")
 def download(id, subid):
@@ -402,6 +369,7 @@ def jobUpdate(id):
     print(type(id))
     if Datastore[id]["status"] == "queued":
         Datastore[id]["status"] = "running"
+        Datastore[id]["start_datetime"]=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
         return jsonify(Datastore[id])
     elif Datastore[id]["status"] != "queued":
         return Datastore[id]
