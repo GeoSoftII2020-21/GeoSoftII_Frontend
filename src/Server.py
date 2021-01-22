@@ -393,7 +393,7 @@ def serverBoot():
     global docker
     if os.environ.get("DOCKER") == "True":
         docker = True
-    app.run(debug=True, host="0.0.0.0", port=80)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
+    app.run(debug=True, host="0.0.0.0", port=8080)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
 
 
 if __name__ == "__main__":
