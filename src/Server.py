@@ -15,6 +15,7 @@ docker = False
 
 
 Datastore = {}
+exc = {}
 
 
 
@@ -75,8 +76,8 @@ def collections(version):
         return jsonify(data)
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Version.",
+            "level" : "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -103,8 +104,8 @@ def processes(version):
         return jsonify(data)
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -135,14 +136,14 @@ def jobsGET(version):
                     "title": "openEO"
                 }
             ]
-        }  # Todo: Anpassen
+        }
         for i in Datastore:
             data["jobs"].append(Datastore[i])
         return jsonify(data)
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -180,8 +181,8 @@ def jobsPOST(version):
 
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -203,14 +204,15 @@ def patchFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     dataFromPatch = request.get_json()
-    if (version == "v1"):
-        dataFromPatch["created"] = Datastore[uuid.UUID(id)]["created"]
-        dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-        Datastore[uuid.UUID(id)] = dataFromPatch
+    if version == "v1":
+        if Datastore[uuid.UUID(str(id))]["status"] != "running":
+            dataFromPatch["created"] = Datastore[uuid.UUID(str(id))]["created"]
+            dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+            Datastore[uuid.UUID(id)] = dataFromPatch
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -237,8 +239,8 @@ def deleteFromID(version, id):
         return Response(status=204)
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -259,7 +261,6 @@ def startFromID(version, id):
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
-    #Todo: Datastore sollte immer alle elemente beinhalten
     if (version == "v1"):
         Datastore[uuid.UUID(str(id))]["status"] = "queued"
         job = Datastore[uuid.UUID(str(id))]
@@ -272,8 +273,8 @@ def startFromID(version, id):
         return Response(status=204)
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
             "message": "Invalid API Call.",
+            "level": "error",
             "links": [
                 {
                     "href": "http://localhost/api/v1/.well-known/openeo",
@@ -295,31 +296,48 @@ def getJobFromID(version, id):
         jsonify(data): Ergebnis des Jobs welcher mit der ID assoziiert ist.
     """
     if (version == "v1"):
-        returnVal = {
-            "stac_version":  "1.0.0",
-            "id": id,
-            "type": "Feature",
-            "geometry": None, #Rücksprache was das ist?
-            "properties": {
-                "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
-                "start_datetime": Datastore[uuid.UUID(str(id))]["start_datetime"],
-                "end_datetime": Datastore[uuid.UUID(str(id))]["end_datetime"],
-                "title": Datastore[uuid.UUID(str(id))]["title"],
-                "description": Datastore[uuid.UUID(str(id))]["description"],
-                "created": Datastore[uuid.UUID(str(id))]["created"],
-            },
-            "assets":  {
-            },
-            "links": []
-        }
-        if "updated" in Datastore[uuid.UUID(str(id))]:
-            returnVal["properties"]["updated"] = Datastore[uuid.UUID(str(id))]["updated"],
-        for filename in os.listdir("data/"+ str(id)+"/saves/"):
-            returnVal["assets"][filename] = {"href": "http://localhost:80/download/"+str(id)+"/"+str(filename)[:-3]}
-        return jsonify(returnVal)
+        if Datastore[uuid.UUID(str(id))]["status"] == "error":
+            data = {
+                "id": str(uuid.uuid1()),
+                "level": "error",
+                "message": exc[uuid.UUID(str(id))]
+            }
+            resp = make_response(jsonify(data), 424)
+            return resp
+        if Datastore[uuid.UUID(str(id))]["status"] == "done":
+            returnVal = {
+                "stac_version":  "1.0.0",
+                "id": id,
+                "type": "Feature",
+                "geometry": None, #Rücksprache was das ist?
+                "properties": {
+                    "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
+                    "start_datetime": Datastore[uuid.UUID(str(id))]["start_datetime"],
+                    "end_datetime": Datastore[uuid.UUID(str(id))]["end_datetime"],
+                    "title": Datastore[uuid.UUID(str(id))]["title"],
+                    "description": Datastore[uuid.UUID(str(id))]["description"],
+                    "created": Datastore[uuid.UUID(str(id))]["created"],
+                },
+                "assets":  {
+                },
+                "links": []
+            }
+            if "updated" in Datastore[uuid.UUID(str(id))]:
+                returnVal["properties"]["updated"] = Datastore[uuid.UUID(str(id))]["updated"],
+            for filename in os.listdir("data/"+ str(id)+"/saves/"):
+                returnVal["assets"][filename] = {"href": "http://localhost:8080/download/"+str(id)+"/"+str(filename)[:-3]}
+            return jsonify(returnVal)
+        if Datastore[uuid.UUID(str(id))]["status"] == "running":
+            data = {
+                "id": str(uuid.uuid1()),
+                "level": "error",
+                "message": "Date is Processing"
+            }
+            resp = make_response(jsonify(data), 404)
+            return resp
     else:
         data = {
-            "id": "",  # Todo: ID Generieren bzw. Recherchieren
+            "level" : "error" ,
             "message": "Invalid API Call.",
             "links": [
                 {
@@ -342,7 +360,6 @@ def download(id, subid):
 def postData():
     """
     Custom Route, welche nicht in der OpenEO API Vorgesehen ist. Nimmt die daten der Post request entgegen.
-    Todo: Evtl. Verschieben das der Upload nur noch von der Lokalen Maschine aus möglich ist?
     :returns:
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
@@ -383,6 +400,8 @@ def takeData(id):
     """
     Datastore[id]["end_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
     Datastore[id]["status"] = request.args["status"]
+    if Datastore[id]["status"] == "error":
+        exc[uuid.UUID(str(id))] = request.args["errorType"]
     return Response(status=200)
 
 
