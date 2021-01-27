@@ -170,9 +170,6 @@ def jobsPOST(version):
         Datastore[id]["status"] = "created"
         Datastore[id]["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
                           :-4] + "Z"  # Formatiert zeit zu RFC339
-        Datastore[id]["start_datetime"] = None
-        Datastore[id]["end_datetime"] = None
-
         resp = Response(status=200)
         resp.headers["Location"] = "localhost/api/v1/jobs/" + str(id)
         resp.headers["OpenEO-Identifier"] = str(id)
@@ -205,10 +202,11 @@ def patchFromID(version, id):
     """
     dataFromPatch = request.get_json()
     if version == "v1":
-        if Datastore[uuid.UUID(str(id))]["status"] != "running":
-            dataFromPatch["created"] = Datastore[uuid.UUID(str(id))]["created"]
+        if Datastore[id]["status"] != "running":
+            dataFromPatch["created"] = Datastore[id]["created"]
             dataFromPatch["updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-            Datastore[uuid.UUID(id)] = dataFromPatch
+            Datastore[id] = dataFromPatch
+            return Response(status=204)
     else:
         data = {
             "message": "Invalid API Call.",
@@ -262,6 +260,8 @@ def startFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
+        Datastore[id]["start_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
+                          :-4] + "Z"
         Datastore[uuid.UUID(str(id))]["status"] = "queued"
         job = Datastore[uuid.UUID(str(id))]
         temp = dict(job)
@@ -335,6 +335,13 @@ def getJobFromID(version, id):
             }
             resp = make_response(jsonify(data), 404)
             return resp
+        data = {
+            "id": str(uuid.uuid1()),
+            "level": "error",
+            "message": "A unkown error Occured"
+        }
+        resp = make_response(jsonify(data), 404)
+        return resp
     else:
         data = {
             "level" : "error" ,
