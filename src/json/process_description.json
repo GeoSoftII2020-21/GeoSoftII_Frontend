@@ -3,7 +3,7 @@
     {
       "id": "ndvi",
       "summary": "Normalized Difference Vegetation Index",
-      "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. As a result of the computation, a NetCDF-File including the NDVI-values is created in the given path.",
+      "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. Also the function takes a bounding box (epsg4326) containing the area of interest. \n\n. As a result of the computation, a xarray including the ndvi-values is returned.",
       "categories": [
         "math > indices",
         "vegetation indices"
@@ -11,15 +11,25 @@
       "parameters": [
         {
           "name": "data",
-          "description": "Sentinel-2 data as a xarray. (From an other Node)",
+          "description": "Sentinel-2 data as a xarray.",
           "schema": {
             "type": "object",
             "subtype": "raster-cube"
           }
+        },
+        {
+          "name": "bb",
+          "description": "bounding box containing area of interest, epsg 4326.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
         }
       ],
       "returns": {
-        "description": "A xarray.core.dataset.Dataset containing the computed NDVI values..",
+        "description": "A xarray.core.dataset.Dataset containing the computed NDVI values.",
         "schema": {
           "type": "object",
           "subtype": "raster-cube"
@@ -46,7 +56,7 @@
     {
       "id": "mean_sst",
       "summary": "Mean Sea Surface Temperature",
-      "description": "Computes the arithmatic mean of sst data. The arithmetic mean is defined as the sum of all elements divided by the number of elements. The user defines a timeframe and optionally also a spatial subset, for which the mean is to be computed. For each day in the given timeframe the sea surface temperature values for a cell are summed up and divided by the number of days in the timeframe. This is done for all cells within the spatial subset or, if no bounding box was defined, for all cells in the dataset.",
+      "description": "Computes the arithmatic mean of sst data. The arithmetic mean is defined as the sum of all elements divided by the number of elements. The user defines a timeframe and optionally also a spatial subset for which the mean is to be computed. For each day in the given timeframe the sea surface temperature values for a cell are summed up and divided by the number of days in the timeframe. This is done for all cells within the spatial subset or, if no bounding box was defined, for all cells in the dataset.",
       "categories": [
         "math",
         "reducer"
@@ -91,23 +101,29 @@
         }
       },
       "exceptions": {
-        "InvalidBboxLengthError": {
+        "ParameterTypeError": {
+          "message": "Values of Parameter bbox must be numbers and values of parameter timeframe must be strings of the format 'year-month-day'. For example '1981-01-01'. Please specify values that follow this."
+        },
+        "BboxLengthError": {
           "message": "Parameter bbox is an array with four values: [min Longitude, min Latitude, max Longitude, max Latitude]. Please specify an array with exactly four values."
         },
-        "InvalidLongitudeValueError": {
-          "message": "Longitude is out of bounds."
+        "BboxCellsizeError": {
+          "message": "Difference between first and second Latitude or first and second Longitude value is too small. Please check the cellsize of the dataset."
         },
-        "InvalidLatitudeValueError": {
-          "message": "Latitude is out of bounds."
+        "LongitudeValueError": {
+          "message": "Longitude values are out of bounds. Please check the range of the dataset."
         },
-        "InvalidTimeframeLengthError": {
+        "LatitudeValueError": {
+          "message": "Latitude values are out of bounds. Please check the range of the dataset."
+        },
+        "TimeframeLengthError": {
           "message": "Parameter timeframe is an array with two values: [start date, end date]. Please specify an array with exactly two values."
         },
-        "InvalidTimeframeValueError": {
-          "message": "Timeframe values are strings of the format 'year-month-day'. For example '1981-01-01'. Please specify timeframe values that follow this format."
+        "TimeframeValueError": {
+          "message": "Timeframe values are out of bounds. Please check the range of the dataset."
         },
-        "ValueError": {
-          "message": "The timeframe values are invalid. Please specify actual dates as start and end date. "
+        "DatasetAttributesError": {
+          "message": "Parameter data must include dimensions 'lat', 'lon' and 'time' and a data variable named 'sst'."
         }
       },
       "links": [
@@ -164,61 +180,76 @@
     },
     {
       "id": "load_collection",
-      "summary": "Load a specified Collection. Viable Collections are seen in the description",
-      "description": "Loads a  a",
+      "summary": "Loads the requested collection",
+      "description": "Loads the requested collection from storage and returns the requested timeframe as a datacube",
       "categories": [
         "loading"
       ],
       "parameters": [
         {
-          "name": "timeframe",
-          "description": "An array with two values: [start date, end date, Format]. Each date String should be Formatted like the Format String, Example: '%Y-%m-%d %H:%M:%S.%f' ",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "subtype": "date"
-            }
-          }
-        },
-        {
-          "name": "cloudcoverage",
-          "description": "Array with cloudcoverage in percent. It contains two  values  [min  percent, max  percent]. Only for Sentinel2 Data",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          }
-        },
-        {
-          "name": "DataType",
-          "description": "Specify which Datatype. Avaiable are 'SST' data and 'Sentinel2' Data",
+          "name": "Collection",
+          "description": "A string with the name of the requested collection ",
           "schema": {
             "type": "string"
           }
         },
         {
-          "name": "Login",
-          "description": "An Array cotaining Strings with Login Data for Sentinelhub",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "name": "start",
+          "decription": "A string in form of an datetime64[ns] object as start of the timeframe",
+          "shema": {
+            "type": "string",
+            "subtype": "datetime64[ns]"
+          }
+        },
+        {
+          "name": "end",
+          "decription": "A string in form of an datetime64[ns] object as end of the timeframe",
+          "shema": {
+            "type": "string",
+            "subtype": "datetime64[ns]"
           }
         }
       ],
       "returns": {
         "description": "Returns a Datacube",
-        "schema": {
+        "shema": {
           "type": "object",
           "subtype": "raster-cube"
         }
       },
       "exceptions": {
-        "ExampleException": {
-          "message": "TodoEinfügen"
+        "NoPath": {
+          "message": "No file in this path"
+        },
+        "NoResolution": {
+          "message": "Invalid Resolution, try 10, 20, 60 or 100"
+        },
+        "NoSafeFileError": {
+          "message": "In this directory is no SAFE file to build a cube"
+        },
+        "FileNotFoundError": {
+          "message": "Directory empty"
+        },
+        "DirectoryNotFoundError": {
+          "message": "No matching directory found"
+        },
+        "TimeframeError": {
+          "message": "Ending year must be bigger than beginning year"
+        },
+        "NotNetCDFError": {
+          "message": "Path does not belong to a netCDF-file"
+        },
+        "FilenameError": {
+          "message": "Name is not a permitted filename"
+        },
+        "TimeframeLengthError": {
+          "message": "Parameter timeframe is an array with two values: [start date, end date]. Please specify an array with exactly two values."
+        },
+        "TimeframeValueError": {
+          "message": "Timeframe values are out of bounds. Please check the range of the dataset."
+        },
+        "ParameterTypeError": {
+          "message": "Values of parameter timeframe must be strings of the format 'year-month-day'. For example '1981-01-01'. Please specify values that follow this."
         }
       }
     }

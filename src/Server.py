@@ -29,10 +29,13 @@ def default():
     # Todo: Anpassen
     data = {"api_version": "1.0.0", "backend_version": "1.1.2", "stac_version": "string", "id": "cool-eo-cloud",
             "title": "WWU Geosoft2 Projekt", "description": "WWU Projekt", "production": False,
-            "endpoints": [{"path": "/collections", "methods": ["GET"]}, {"path": "/processes", "methods": ["GET"]},
+            "endpoints": [{"path": "/collections", "methods": ["GET"]},
+                          {"path": "/processes", "methods": ["GET"]},
                           {"path": "/jobs", "methods": ["GET", "POST"]},
                           {"path": "/jobs/{job_id}", "methods": ["DELETE", "PATCH"]},
-                          {"path": "/jobs/{job_id}/result", "methods": ["GET", "POST"]}], "links": [
+                          {"path": "/jobs/{job_id}/results", "methods": ["GET", "POST"]},
+                          {"path": "/jobs/{job_id}", "methods": ["GET"]},
+                          ], "links": [
             {"href": "https://www.uni-muenster.de/de/", "rel": "about", "type": "text/html",
              "title": "Homepage of the service provider"}]}
     return jsonify(data)
@@ -232,8 +235,7 @@ def deleteFromID(version, id):
         jsonify(data): HTTP Statuscode für Erfolg (?)
     """
     if (version == "v1"):
-        Datastore[uuid.UUID(id)]["status"] = "canceled"
-        #Todo: Wirklich alles Löschen und nicht Abbrechen
+        Datastore[uuid.UUID(str(id))]["status"] = "canceled"
         return Response(status=204)
     else:
         data = {
@@ -356,6 +358,24 @@ def getJobFromID(version, id):
         resp = make_response(jsonify(data), 404)
         return resp
 
+@app.route("/api/<string:version>/jobs/<uuid:id>",methods=["GET"])
+def getjob(version, id):
+    if version=="v1":
+        return jsonify([uuid.UUID(str(id))])
+    else:
+        data = {
+            "level" : "error" ,
+            "message": "Invalid API Call.",
+            "links": [
+                {
+                    "href": "http://localhost/api/v1/.well-known/openeo",
+                    "rel": "about"
+                }
+            ]
+        }
+        resp = make_response(jsonify(data), 404)
+        return resp
+
 @app.route("/download/<uuid:id>/<uuid:subid>")
 def download(id, subid):
     name = str(subid)+".nc"
@@ -375,11 +395,6 @@ def postData():
     binary_format = bytearray(dataFromPost)
     f.write(binary_format)
     f.close()
-    #if docker:
-    #    r = requests.post("http://database:80/data", json=None)
-    #else:
-    #    r = requests.post("http://localhost:443/data", json=None)
-    #data = r.json()
     return Response(status=200)
 
 
@@ -390,7 +405,6 @@ def jobUpdate(id):
     :param id: ID
     :return: Json mit Job
     """
-    print(type(id))
     if Datastore[id]["status"] == "queued":
         Datastore[id]["status"] = "running"
         Datastore[id]["start_datetime"]=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
