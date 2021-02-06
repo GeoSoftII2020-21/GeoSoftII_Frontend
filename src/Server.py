@@ -23,10 +23,9 @@ exc = {}
 @app.route("/api/v1/", methods=['GET'])
 def default():
     """
-    Soll ein JSON mit der Kurzübersicht unserer API Returnen
+    Default Endpoint. Returns a json which contains the description
     :return: JSON
     """
-    # Todo: Anpassen
     data = {"api_version": "1.0.0", "backend_version": "1.1.2", "stac_version": "string", "id": "cool-eo-cloud",
             "title": "WWU Geosoft2 Projekt", "description": "WWU Projekt", "production": False,
             "endpoints": [{"path": "/collections", "methods": ["GET"]},
@@ -45,11 +44,10 @@ def default():
 @app.route("/api/v1/.well-known/openeo", methods=["GET"])
 def wellKnownEO():
     """
-    Implementiert abfrage für Supported openEO Versions auf wunsch von Judith.
-    Evtl. Antwort noch anpassen. Ich bin mir noch nicht ganz sicher ob das so richtig ist. Insbesondere weiß ich nicht welche version wir implementieren.
+    Implements the well known openeo endpoint
 
     :returns:
-        jsonify(data): JSON mit der Unterstützen API Version und ein verweis auf diese.
+        jsonify(data): JSON
     """
     data = {
         "versions": [
@@ -66,13 +64,11 @@ def wellKnownEO():
 @app.route("/api/<string:version>/collections", methods=['GET'])
 def collections(version):
     """
-    Returnt alle vorhandenen Collections bei einer GET Request
-    Collections sollten evtl im dezidierten server gelistet sein, entsprechend sollte dort die Antwort generiert werden
+    Returns the collections description
 
     :returns:
-        jsonify(data): Alle Collections in einer JSON
+        jsonify(data): Collections description in a json
     """
-    # Todo: Abfrage an Daten Managment System über welche Collections wir überhaupt verfügen
     if (version == "v1"):
         with open("json/collection_description.json") as json_file:
             data = json.load(json_file)
@@ -95,11 +91,10 @@ def collections(version):
 @app.route("/api/<string:version>/processes", methods=['GET'])
 def processes(version):
     """
-    Returnt alle vorhandenen processes bei einer GET Request
-    Quelle für NDVI: https://github.com/Open-EO/openeo-processes/blob/master/ndvi.json
+    Returns the process description
 
     :returns:
-        jsonify(data): Alle processes in einer JSON
+        jsonify(data): Process Description
     """
     if (version == "v1"):
         with open("json/process_description.json") as json_file:
@@ -123,9 +118,9 @@ def processes(version):
 @app.route("/api/<string:version>/jobs", methods=['GET'])
 def jobsGET(version):
     """
-    Returnt alle vorhandenen jobs bei einer GET Request
+    Returns all saved Jobs
     :returns:
-        jsonify(data): Alle jobs in einer JSON
+        jsonify(data): All jobs which are sent to the server in a JSON
     """
     if (version == "v1"):
         data = {
@@ -161,9 +156,9 @@ def jobsGET(version):
 @app.route("/api/<string:version>/jobs", methods=['POST'])
 def jobsPOST(version):
     """
-    Nimmt den Body eines /jobs post request entgegen. Wichtig: Startet ihn NICHT!
-    :returns:
-        jsonify(data): HTTP Statuscode für Erfolg (?)
+    Takes a given job an puts it in the Datastore
+    :param version:
+    :return: returns a header which shows the lcoation and id
     """
     if (version == "v1"):
         dataFromPost = request.get_json()  # Todo: JSON Evaluieren
@@ -197,11 +192,12 @@ def jobsPOST(version):
 @app.route("/api/<string:version>/jobs/<uuid:id>", methods=['PATCH'])
 def patchFromID(version, id):
     """
-    Nimmt den Body einer Patch request mit einer ID entgegen
+    Takes the body of a patch request and replaces the body with the specified id
     :parameter:
-        id (int): Nimmt die ID aus der URL entgegen
+        id (UUID): id
+        version (string): API Version
     :returns:
-        jsonify(data): HTTP Statuscode für Erfolg (?)
+        jsonify(data): status code
     """
     dataFromPatch = request.get_json()
     if version == "v1":
@@ -228,11 +224,12 @@ def patchFromID(version, id):
 @app.route("/api/<string:version>/jobs/<uuid:id>", methods=["DELETE"])
 def deleteFromID(version, id):
     """
-    Nimmt eine Delete request für eine ID Entgegen
+    Takes a delete request and deletes the job
     :parameter:
-        id (int): Nimmt die ID aus der URL entgegen
+        id (UUID): Job id
+        version (string): API Version
     :returns:
-        jsonify(data): HTTP Statuscode für Erfolg (?)
+        jsonify(data): http statuscode
     """
     if (version == "v1"):
         Datastore[uuid.UUID(str(id))]["status"] = "canceled"
@@ -255,11 +252,12 @@ def deleteFromID(version, id):
 @app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=['POST'])
 def startFromID(version, id):
     """
-    Startet einen Job aufgrundlage einer ID aus der URL. Nimmt ebenso den Body der Post request entgegen
+    Starts a job which is already saved in the datastore
     :parameter:
-        id (int): Nimmt die ID aus der URL entgegen
+        id (UUID): Job ID
+        version (string): API Version
     :returns:
-        jsonify(data): HTTP Statuscode für Erfolg (?)
+        jsonify(data): HTTP Statuscode
     """
     if (version == "v1"):
         Datastore[id]["start_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
@@ -291,11 +289,12 @@ def startFromID(version, id):
 @app.route("/api/<string:version>/jobs/<uuid:id>/results", methods=["GET"])
 def getJobFromID(version, id):
     """
-    Nimmt den Body einer GET request mit einer ID entgegen
+    Takes the bod yfrom aget request and returns the result
     :parameter:
-        id (int): Nimmt die ID aus der URL entgegen
+        id (UUID): Job ID
+        version (string): API Version
     :returns:
-        jsonify(data): Ergebnis des Jobs welcher mit der ID assoziiert ist.
+        jsonify(data): Job Result.
     """
     if (version == "v1"):
         if Datastore[uuid.UUID(str(id))]["status"] == "error":
@@ -360,6 +359,12 @@ def getJobFromID(version, id):
 
 @app.route("/api/<string:version>/jobs/<uuid:id>",methods=["GET"])
 def getjob(version, id):
+    """
+    Returns the job
+    :param version: API Version
+    :param id: ID
+    :return:
+    """
     if version=="v1":
         return jsonify([uuid.UUID(str(id))])
     else:
@@ -378,6 +383,12 @@ def getjob(version, id):
 
 @app.route("/download/<uuid:id>/<uuid:subid>")
 def download(id, subid):
+    """
+    Download method for the netcdf
+    :param version: API Version
+    :param id: ID
+    :return: Netcdf file
+    """
     name = str(subid)+".nc"
     return send_from_directory("data/"+str(id)+"/saves",filename=name, as_attachment=True,attachment_filename=name, mimetype="application/x-netcdf")
 
@@ -386,24 +397,19 @@ def download(id, subid):
 @app.route("/data", methods=["POST"])
 def postData():
     """
-    Custom Route, welche nicht in der OpenEO API Vorgesehen ist. Nimmt die daten der Post request entgegen.
+    Custom Route, Should enable a collection post. Not Yet Implemented
     :returns:
-        jsonify(data): HTTP Statuscode für Erfolg (?)
+        jsonify(data): HTTP Statuscode  (?)
     """
-    dataFromPost = request.get_data()
-    f = open('data/sst.day.mean.1984.v2.nc', 'w+b')
-    binary_format = bytearray(dataFromPost)
-    f.write(binary_format)
-    f.close()
-    return Response(status=200)
+    return Response(status=500)
 
 
 @app.route("/jobRunning/<uuid:id>", methods=["GET"])
 def jobUpdate(id):
     """
-    Aktualisiert den Job status sofern er nicht abgebrochen wurde
+    Set the Job status if not canceled
     :param id: ID
-    :return: Json mit Job
+    :return: Job JSON
     """
     if Datastore[id]["status"] == "queued":
         Datastore[id]["status"] = "running"
@@ -416,7 +422,7 @@ def jobUpdate(id):
 @app.route("/takeData/<uuid:id>", methods=["POST"])
 def takeData(id):
     """
-    Nimmt das ergebnis eines jobs entgegen und fügt ihm den Datastore hinzu
+    Takes the job result and puts it in the datastore
     :rtype: Response Object
     """
     Datastore[id]["end_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z" #Formatiert zeit zu RFC339
@@ -428,12 +434,12 @@ def takeData(id):
 
 def serverBoot():
     """
-    Startet den Server. Aktuell im Debug Modus und Reagiert auf alle eingehenden Anfragen auf Port 80.
+    Starts the application
     """
     global docker
     if os.environ.get("DOCKER") == "True":
         docker = True
-    app.run(debug=True, host="0.0.0.0", port=80)  # Todo: Debug  Ausschalten, Beißt sich  mit Threading
+    app.run(debug=True, host="0.0.0.0", port=80)
 
 
 if __name__ == "__main__":
