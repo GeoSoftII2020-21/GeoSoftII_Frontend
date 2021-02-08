@@ -2,12 +2,7 @@
   "processes": [
     {
       "id": "ndvi",
-      "summary": "Normalized Difference Vegetation Index",
       "description": "Computes the Normalized Difference Vegetation Index (NDVI). The NDVI is computed as *(nir - red) / (nir + red)*.\n\nThe `data` parameter expects a raster data cube as NetCDF including Sentinel2-Data. This cube has three dimensions and two data variables. Dimension are time, lon and lat while data variables are red and nir.\n\n. Also the function takes a bounding box (epsg4326) containing the area of interest. \n\n. As a result of the computation, a xarray including the ndvi-values is returned.",
-      "categories": [
-        "math > indices",
-        "vegetation indices"
-      ],
       "parameters": [
         {
           "name": "data",
@@ -76,8 +71,7 @@
           "schema": {
             "type": "array",
             "items": {
-              "type": "string",
-              "subtype": "date"
+              "type": "string"
             }
           }
         },
@@ -89,8 +83,7 @@
             "items": {
               "type": "number"
             }
-          },
-          "optional": true
+          }
         }
       ],
       "returns": {
@@ -195,24 +188,22 @@
         },
         {
           "name": "start",
-          "decription": "A string in form of an datetime64[ns] object as start of the timeframe",
-          "shema": {
-            "type": "string",
-            "subtype": "datetime64[ns]"
+          "description": "A string in form of an datetime64[ns] object as start of the timeframe",
+          "schema": {
+            "type": "string"
           }
         },
         {
           "name": "end",
-          "decription": "A string in form of an datetime64[ns] object as end of the timeframe",
-          "shema": {
-            "type": "string",
-            "subtype": "datetime64[ns]"
+          "description": "A string in form of an datetime64[ns] object as end of the timeframe",
+          "schema": {
+            "type": "string"
           }
         }
       ],
       "returns": {
         "description": "Returns a Datacube",
-        "shema": {
+        "schema": {
           "type": "object",
           "subtype": "raster-cube"
         }

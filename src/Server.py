@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, Response, send_from_directory, make_r
 from flask_cors import CORS
 import json
 import xarray
-
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -168,7 +168,7 @@ def jobsPOST(version):
         Datastore[id]["status"] = "created"
         Datastore[id]["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
                           :-4] + "Z"  # Formatiert zeit zu RFC339
-        resp = Response(status=200)
+        resp = Response(status=201)
         resp.headers["Location"] = "localhost/api/v1/jobs/" + str(id)
         resp.headers["OpenEO-Identifier"] = str(id)
         return resp
@@ -260,17 +260,39 @@ def startFromID(version, id):
         jsonify(data): HTTP Statuscode
     """
     if (version == "v1"):
-        Datastore[id]["start_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
-                          :-4] + "Z"
-        Datastore[uuid.UUID(str(id))]["status"] = "queued"
-        job = Datastore[uuid.UUID(str(id))]
-        temp = dict(job)
-        temp["id"] = str(job["id"])
-        if docker:
-            requests.post("http://processManager:80/takeJob", json=temp)
-        else:
-            requests.post("http://localhost:440/takeJob", json=temp)
-        return Response(status=204)
+        try:
+            Datastore[id]["start_datetime"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
+                              :-4] + "Z"
+            Datastore[id]["status"] = "queued"
+            job = Datastore[id]
+            temp = dict(job)
+            temp["id"] = str(job["id"])
+            if docker:
+                requests.post("http://processManager:80/takeJob", json=temp)
+            else:
+                requests.post("http://localhost:440/takeJob", json=temp)
+            return Response(status=202)
+        except KeyError:
+            data = {
+                "message": "Invalid Job ID Call.",
+                "level": "error",
+                "code": "KeyError"
+            }
+            resp = make_response(jsonify(data), 404)
+            return resp
+        except:
+            data = {
+                "message": "Invalid API Call.",
+                "level": "error",
+                "links": [
+                    {
+                        "href": "http://localhost/api/v1/.well-known/openeo",
+                        "rel": "about"
+                    }
+                ]
+            }
+            resp = make_response(jsonify(data), 404)
+            return resp
     else:
         data = {
             "message": "Invalid API Call.",
@@ -297,62 +319,78 @@ def getJobFromID(version, id):
         jsonify(data): Job Result.
     """
     if (version == "v1"):
-        if Datastore[uuid.UUID(str(id))]["status"] == "error":
+        try:
+            if Datastore[uuid.UUID(str(id))]["status"] == "error":
+                data = {
+                    "id": str(uuid.uuid1()),
+                    "level": "error",
+                    "message": "Forwarded Error" + str(exc[uuid.UUID(str(id))])
+                }
+                resp = make_response(jsonify(data), 424)
+                return resp
+            if Datastore[uuid.UUID(str(id))]["status"] == "finished":
+                returnVal = {
+                    "stac_version":  "1.0.0",
+                    "id": id,
+                    "type": "Feature",
+                    "geometry": None, #Rücksprache was das ist?
+                    "properties": {
+                        "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
+                        "start_datetime": Datastore[uuid.UUID(str(id))]["start_datetime"],
+                        "end_datetime": Datastore[uuid.UUID(str(id))]["end_datetime"],
+                        "title": Datastore[uuid.UUID(str(id))]["title"],
+                        "description": Datastore[uuid.UUID(str(id))]["description"],
+                        "created": Datastore[uuid.UUID(str(id))]["created"],
+                    },
+                    "assets":  {
+                    },
+                    "links": []
+                }
+                if "updated" in Datastore[uuid.UUID(str(id))]:
+                    returnVal["properties"]["updated"] = Datastore[uuid.UUID(str(id))]["updated"],
+                for filename in os.listdir("data/"+ str(id)+"/saves/"):
+                    returnVal["assets"][filename] = {"href": "http://localhost:80/download/"+str(id)+"/"+str(filename)[:-3]}
+                return jsonify(returnVal)
+            if Datastore[uuid.UUID(str(id))]["status"] == "running":
+                data = {
+                    "id": str(uuid.uuid1()),
+                    "level": "error",
+                    "message": "Data is Processing"
+                }
+                resp = make_response(jsonify(data), 404)
+                return resp
+        except KeyError:
             data = {
-                "id": str(uuid.uuid1()),
+                "message": "Invalid Job ID Call.",
                 "level": "error",
-                "message": exc[uuid.UUID(str(id))]
+                "code": "KeyError"
             }
-            resp = make_response(jsonify(data), 424)
+            resp = make_response(jsonify(data), 404)
             return resp
-        if Datastore[uuid.UUID(str(id))]["status"] == "done":
-            returnVal = {
-                "stac_version":  "1.0.0",
-                "id": id,
-                "type": "Feature",
-                "geometry": None, #Rücksprache was das ist?
-                "properties": {
-                    "datetime": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z",
-                    "start_datetime": Datastore[uuid.UUID(str(id))]["start_datetime"],
-                    "end_datetime": Datastore[uuid.UUID(str(id))]["end_datetime"],
-                    "title": Datastore[uuid.UUID(str(id))]["title"],
-                    "description": Datastore[uuid.UUID(str(id))]["description"],
-                    "created": Datastore[uuid.UUID(str(id))]["created"],
-                },
-                "assets":  {
-                },
-                "links": []
-            }
-            if "updated" in Datastore[uuid.UUID(str(id))]:
-                returnVal["properties"]["updated"] = Datastore[uuid.UUID(str(id))]["updated"],
-            for filename in os.listdir("data/"+ str(id)+"/saves/"):
-                returnVal["assets"][filename] = {"href": "http://localhost:8080/download/"+str(id)+"/"+str(filename)[:-3]}
-            return jsonify(returnVal)
-        if Datastore[uuid.UUID(str(id))]["status"] == "running":
+        except:
             data = {
+                "message": "Invalid API Call.",
                 "id": str(uuid.uuid1()),
-                "level": "error",
-                "message": "Date is Processing"
+                "links": [
+                    {
+                        "href": "http://localhost/api/v1/.well-known/openeo",
+                        "rel": "about"
+                    }
+                ]
             }
             resp = make_response(jsonify(data), 404)
             return resp
         data = {
             "id": str(uuid.uuid1()),
             "level": "error",
-            "message": "A unkown error Occured"
+            "message": "A unkown error Occured."
         }
         resp = make_response(jsonify(data), 404)
         return resp
     else:
         data = {
-            "level" : "error" ,
-            "message": "Invalid API Call.",
-            "links": [
-                {
-                    "href": "http://localhost/api/v1/.well-known/openeo",
-                    "rel": "about"
-                }
-            ]
+            "code": str(uuid.uuid1()),
+            "message": "Invalid API Call."
         }
         resp = make_response(jsonify(data), 404)
         return resp
@@ -366,7 +404,7 @@ def getjob(version, id):
     :return:
     """
     if version=="v1":
-        return jsonify([uuid.UUID(str(id))])
+        return jsonify(Datastore[uuid.UUID(str(id))])
     else:
         data = {
             "level" : "error" ,
