@@ -169,8 +169,8 @@ def jobsPOST(version):
         Datastore[id]["created"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[
                           :-4] + "Z"  # Formatiert zeit zu RFC339
         resp = Response(status=201)
-        resp.headers["Location"] = "localhost/api/v1/jobs/" + str(id)
-        resp.headers["OpenEO-Identifier"] = str(id)
+        resp.headers["location"] = "localhost/api/v1/jobs/" + str(id)
+        resp.headers["openeo-identifier"] = str(id)
         return resp
 
 

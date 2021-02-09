@@ -187,17 +187,13 @@
           }
         },
         {
-          "name": "start",
-          "description": "A string in form of an datetime64[ns] object as start of the timeframe",
+          "name": "timeframe",
+          "description": "Array with three values [start date, end date, format] Dates are strings of the format 'day-month-year hh:mm:ss'.Example date: '01-09-1981 00:00:00'. The format is always '%d-%m-%Y %H:%M:%S'",
           "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "name": "end",
-          "description": "A string in form of an datetime64[ns] object as end of the timeframe",
-          "schema": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       ],
