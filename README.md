@@ -24,13 +24,12 @@ This subproject covers the points [/F0010/ to /F0060/](https://docs.google.com/d
 \
 <a name="install"><h3>Installation</h3></a>
 
-The installation and execution of the container is achieved through this command:
+Die Installation und AUsführung ist exklusiv im Rahmen des zur verfügung gestellten docker *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)* möglich
 ```docker
-docker run -p 80:80 --name api felixgi1516/geosoft2_frontend
+docker-compose up
 ```
 You can now checkout every [endpoint](#endpoints) with the base url [localhost/api/v1/](http://localhost/api/v1/).
 
-:warning: Note that you can not execute batch jobs in this state. For the full api functionality please use the main *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)*.
 
 \
 <a name="functionalities"><h3>Scope of functionalities</h3></a>
