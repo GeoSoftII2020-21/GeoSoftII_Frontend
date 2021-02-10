@@ -19,12 +19,12 @@ The goal is to provide a openEO compliant HTTP API which can communicate with ot
 
 This subproject covers the points [/F0010/ to /F0060/](https://docs.google.com/document/d/1WoATTUVsINCdbQf7znDNLueZm17Sar1JBZDKQGBunbE/edit#heading=h.mrpj8lyegpld) of the requirements.
 
- There also exists a [Docker Repository](https://hub.docker.com/r/felixgi1516/geosoft2_frontend), which is linked with this one and from which the service can be obtained as an image. And can then be used locally as a container.
+There also exists a [Docker Repository](https://hub.docker.com/r/felixgi1516/geosoft2_frontend), which is linked with this one and from which the service can be obtained as an image. And can then be used locally as a container.
+
 
 \
 <a name="install"><h3>Installation</h3></a>
-
-Die Installation und AUsführung ist exklusiv im Rahmen des zur verfügung gestellten *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)* möglich
+The installation and execution is possible exclusively provided within the framework of the *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)*.
 ```docker
 docker-compose up
 ```
