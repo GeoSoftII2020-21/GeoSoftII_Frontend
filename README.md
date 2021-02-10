@@ -53,7 +53,6 @@ The first main function of this microservice is to provide basic information on 
 \
 <a name="annex"><h3>Appendix</h3></a>
 
-
 #### Technologies
 Software | Version
 ------ | ------
