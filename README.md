@@ -24,7 +24,7 @@ This subproject covers the points [/F0010/ to /F0060/](https://docs.google.com/d
 \
 <a name="install"><h3>Installation</h3></a>
 
-Die Installation und AUsführung ist exklusiv im Rahmen des zur verfügung gestellten docker *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)* möglich
+Die Installation und AUsführung ist exklusiv im Rahmen des zur verfügung gestellten *[docker-compose.yml](https://github.com/GeoSoftII2020-21/GeoSoftII_Projekt/blob/Docker-compose/docker-compose.yml)* möglich
 ```docker
 docker-compose up
 ```
